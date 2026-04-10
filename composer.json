@@ -1,0 +1,42 @@
+{
+  "name": "equidna/domain-token-auth",
+  "description": "Secure domain-based token authentication package for Laravel",
+  "type": "library",
+  "license": "MIT",
+  "require": {
+    "php": "^8.2",
+    "illuminate/support": "^11.0|^12.0",
+    "illuminate/http": "^11.0|^12.0",
+    "illuminate/database": "^11.0|^12.0",
+    "illuminate/console": "^11.0|^12.0"
+  },
+  "require-dev": {
+    "orchestra/testbench": "^9.0|^10.0",
+    "phpunit/phpunit": "^11.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "Equidna\\DomainTokenAuth\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Equidna\\DomainTokenAuth\\Tests\\": "tests/"
+    }
+  },
+  "extra": {
+    "laravel": {
+      "providers": [
+        "Equidna\\DomainTokenAuth\\Providers\\DomainTokenAuthServiceProvider"
+      ],
+      "aliases": {
+        "DomainToken": "Equidna\\DomainTokenAuth\\Facades\\DomainToken"
+      }
+    }
+  },
+  "minimum-stability": "stable",
+  "prefer-stable": true,
+  "scripts": {
+    "test": "vendor/bin/phpunit"
+  }
+}
