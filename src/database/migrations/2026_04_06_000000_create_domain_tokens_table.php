@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('name')->nullable();
             $table->json('roles')->nullable();
             $table->json('actions')->nullable();
-            $table->nullableMorphs('tokenable');
+            $table->morphs('tokenable');
             $table->timestamp('starts_at')->nullable();
             $table->timestamp('expires_at')->nullable();
             $table->timestamp('last_used_at')->nullable();
@@ -29,6 +29,7 @@ return new class extends Migration
 
             $table->index(['domain', 'revoked_at']);
             $table->index(['domain', 'starts_at', 'expires_at']);
+            $table->index(['domain', 'tokenable_type', 'tokenable_id']);
         });
     }
 

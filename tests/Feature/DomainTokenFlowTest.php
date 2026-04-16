@@ -7,9 +7,19 @@ use Equidna\DomainTokenAuth\Tests\FakeApplication;
 use Equidna\DomainTokenAuth\Tests\FakeUser;
 use Equidna\DomainTokenAuth\Tests\TestCase;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class DomainTokenFlowTest extends TestCase
 {
+    public function test_domain_tokens_require_an_owner(): void
+    {
+        $columns = collect(DB::select('PRAGMA table_info(domain_tokens)'))
+            ->keyBy('name');
+
+        self::assertSame(1, (int) $columns->get('tokenable_type')->notnull);
+        self::assertSame(1, (int) $columns->get('tokenable_id')->notnull);
+    }
+
     public function test_can_issue_and_authenticate_token_for_domain(): void
     {
         $user = FakeUser::query()->create(['name' => 'Ada']);

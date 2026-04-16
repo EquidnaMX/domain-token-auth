@@ -81,7 +81,7 @@ tests/
 | name                          | varchar         | nullable, etiqueta                      |
 | roles                         | JSON            | nullable, roles asignados               |
 | actions                       | JSON            | nullable, acciones expandidas           |
-| tokenable_type / tokenable_id | nullableMorphs  | dueño polimórfico                       |
+| tokenable_type / tokenable_id | morphs          | dueño polimórfico obligatorio           |
 | starts_at                     | timestamp       | nullable                                |
 | expires_at                    | timestamp       | nullable                                |
 | last_used_at                  | timestamp       | nullable, actualizado en authenticate() |
@@ -89,7 +89,7 @@ tests/
 | revoked_reason                | varchar         | nullable                                |
 | created_at / updated_at       | timestamps      |                                         |
 
-Índices: `(domain, revoked_at)` y `(domain, starts_at, expires_at)`
+Índices: `(domain, revoked_at)`, `(domain, starts_at, expires_at)` y `(domain, tokenable_type, tokenable_id)`
 
 ---
 
