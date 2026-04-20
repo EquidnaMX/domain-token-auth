@@ -5,10 +5,13 @@
   "license": "MIT",
   "require": {
     "php": "^8.2",
-    "illuminate/support": "^11.0|^12.0",
-    "illuminate/http": "^11.0|^12.0",
-    "illuminate/database": "^11.0|^12.0",
-    "illuminate/console": "^11.0|^12.0"
+    "illuminate/support": "^12.0",
+    "illuminate/http": "^12.0",
+    "illuminate/database": "^12.0",
+    "illuminate/console": "^12.0"
+  },
+  "suggest": {
+    "equidna/bee-hive": "Required for multi-tenant context propagation after token authentication (^1.0)"
   },
   "require-dev": {
     "orchestra/testbench": "^9.0|^10.0",

@@ -1,6 +1,20 @@
 <?php
 
 return [
+    /*
+    |--------------------------------------------------------------------------
+    | BeeHive Integration
+    |--------------------------------------------------------------------------
+    | Controls optional integration with equidna/bee-hive. Set
+    | apply_tenant_context to false to prevent ATL from writing into the
+    | TenantContext singleton after token authentication.
+    */
+    'bee_hive' => [
+        'apply_tenant_context' => env('DOMAIN_TOKEN_APPLY_TENANT_CONTEXT', true),
+        'enforce_tenant_isolation' => env('DOMAIN_TOKEN_ENFORCE_TENANT_ISOLATION', true),
+        'allow_legacy_tokens_without_tenant_id' => env('DOMAIN_TOKEN_ALLOW_LEGACY_TOKENS', false),
+    ],
+
     'token' => [
         'table' => 'domain_tokens',
         'prefix' => 'dtk_',

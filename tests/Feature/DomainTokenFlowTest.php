@@ -2,8 +2,10 @@
 
 namespace Equidna\DomainTokenAuth\Tests\Feature;
 
+use Equidna\BeeHive\Tenancy\TenantContext;
 use Equidna\DomainTokenAuth\Facades\DomainToken;
 use Equidna\DomainTokenAuth\Tests\FakeApplication;
+use Equidna\DomainTokenAuth\Tests\FakeTenantUser;
 use Equidna\DomainTokenAuth\Tests\FakeUser;
 use Equidna\DomainTokenAuth\Tests\TestCase;
 use Illuminate\Support\Carbon;
@@ -31,6 +33,25 @@ class DomainTokenFlowTest extends TestCase
         ]);
 
         $response->assertOk();
+    }
+
+    public function test_authentication_sets_tenant_context_from_tenant_owner(): void
+    {
+        $user = FakeTenantUser::query()->create([
+            'name' => 'Tenant Ada',
+            'tenant_id' => 123,
+        ]);
+        $issued = DomainToken::issue('tenant_user', $user, ['tenant-users.read']);
+
+        app(TenantContext::class)->clear();
+
+        $response = $this->getJson('/tenant-secured', [
+            'Authorization' => 'Bearer ' . $issued->plainTextToken,
+        ]);
+
+        $response
+            ->assertOk()
+            ->assertJson(['tenant_id' => 123]);
     }
 
     public function test_role_mapped_actions_allow_authorization_checks(): void
@@ -104,6 +125,37 @@ class DomainTokenFlowTest extends TestCase
         );
 
         $response = $this->getJson('/secured', [
+            'Authorization' => 'Bearer ' . $issued->plainTextToken,
+        ]);
+
+        $response->assertStatus(401);
+    }
+
+    public function test_token_stores_tenant_id_from_owner(): void
+    {
+        $user = FakeTenantUser::query()->create([
+            'name' => 'Tenant Ada',
+            'tenant_id' => 42,
+        ]);
+
+        $issued = DomainToken::issue('tenant_user', $user, ['tenant-users.read']);
+
+        self::assertSame('42', $issued->token->tenant_id);
+    }
+
+    public function test_rejects_token_when_context_tenant_does_not_match(): void
+    {
+        $user = FakeTenantUser::query()->create([
+            'name' => 'Tenant Ada',
+            'tenant_id' => 100,
+        ]);
+
+        $issued = DomainToken::issue('tenant_user', $user, ['tenant-users.read']);
+
+        // Simulate a different active tenant in the context
+        app(\Equidna\BeeHive\Tenancy\TenantContext::class)->set(999);
+
+        $response = $this->getJson('/tenant-secured', [
             'Authorization' => 'Bearer ' . $issued->plainTextToken,
         ]);
 

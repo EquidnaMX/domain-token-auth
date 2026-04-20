@@ -13,7 +13,10 @@ class DomainTokenAuthServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        $this->mergeConfigFrom(__DIR__ . '/../../config/domain-token-auth.php', 'domain-token-auth');
+        $this->mergeConfigFrom(
+            __DIR__ . '/../../config/domain-token-auth.php',
+            'domain-token-auth'
+        );
 
         $this->app->singleton(DomainTokenManager::class, fn() => new DomainTokenManager());
 
@@ -29,13 +32,23 @@ class DomainTokenAuthServiceProvider extends ServiceProvider
 
         $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
 
-        $this->publishes([
-            __DIR__ . '/../../config/domain-token-auth.php' => config_path('domain-token-auth.php'),
-        ], 'domain-token-auth-config');
 
         $this->publishes([
-            __DIR__ . '/../database/migrations' => database_path('migrations'),
-        ], 'domain-token-auth-migrations');
+            __DIR__ . '/../../config/domain-token-auth.php' => config_path('domain-token-auth.php'),
+        ], [
+            'domain-token-auth',
+            'domain-token-auth:config'
+        ]);
+
+        $this->publishes(
+            [
+                __DIR__ . '/../database/migrations' => database_path('migrations'),
+            ],
+            [
+                'domain-token-auth',
+                'domain-token-auth:migrations'
+            ]
+        );
 
         if ($this->app->runningInConsole()) {
             $this->commands([

@@ -17,6 +17,7 @@ class DomainToken extends Model
         'actions',
         'tokenable_type',
         'tokenable_id',
+        'tenant_id',
         'starts_at',
         'expires_at',
         'last_used_at',

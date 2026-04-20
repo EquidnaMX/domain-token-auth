@@ -11,6 +11,7 @@ use Equidna\DomainTokenAuth\Exceptions\TokenValidationException;
 use Equidna\DomainTokenAuth\Models\DomainToken;
 use Equidna\DomainTokenAuth\Support\ActionMatcher;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Config;
@@ -50,6 +51,8 @@ class DomainTokenManager
             $roles
         ))));
 
+        $tenantId = $this->resolveTenantIdFromOwner($owner);
+
         $token = DB::transaction(function () use (
             $tokenHash,
             $domain,
@@ -57,6 +60,7 @@ class DomainTokenManager
             $normalizedRoles,
             $grantedActions,
             $owner,
+            $tenantId,
             $resolvedStartsAt,
             $resolvedExpiresAt
         ): DomainToken {
@@ -68,6 +72,7 @@ class DomainTokenManager
                 'actions' => $grantedActions,
                 'tokenable_type' => $owner->getMorphClass(),
                 'tokenable_id' => (string) $owner->getKey(),
+                'tenant_id' => $tenantId,
                 'starts_at' => $resolvedStartsAt,
                 'expires_at' => $resolvedExpiresAt,
             ]);
@@ -106,7 +111,11 @@ class DomainTokenManager
 
         $token->forceFill(['last_used_at' => $now])->save();
 
-        return new AuthenticatedDomainToken($token, $domain, $token->tokenable);
+        $owner = $this->resolveTokenOwner($token);
+        $this->assertTenantIsolation($token, $owner);
+        $this->applyTenantContextFromOwner($owner);
+
+        return new AuthenticatedDomainToken($token, $domain, $owner);
     }
 
     public function revoke(string $plainToken, string $reason = 'manual'): bool
@@ -226,5 +235,150 @@ class DomainTokenManager
         ])));
 
         return $actions;
+    }
+
+    private function resolveTenantIdFromOwner(Model $owner): ?string
+    {
+        $belongsToTenantClass = 'Equidna\\BeeHive\\Traits\\BelongsToTenant';
+
+        if (! trait_exists($belongsToTenantClass)) {
+            return null;
+        }
+
+        if (! in_array($belongsToTenantClass, class_uses_recursive($owner), true)) {
+            return null;
+        }
+
+        $tenantKey = method_exists($owner, 'getTenantKeyName')
+            ? $owner->getTenantKeyName()
+            : (string) Config::get('bee-hive.tenant_key', 'tenant_id');
+
+        $value = $owner->getAttribute($tenantKey);
+
+        // If owner has tenant_id, use it
+        if ($value !== null) {
+            return (string) $value;
+        }
+
+        // Fallback: use active TenantContext from BeeHive
+        $tenantContextClass = 'Equidna\\BeeHive\\Tenancy\\TenantContext';
+
+        if (! class_exists($tenantContextClass) || ! app()->bound($tenantContextClass)) {
+            return null;
+        }
+
+        /** @var \Equidna\BeeHive\Tenancy\TenantContext $context */
+        $context = app($tenantContextClass);
+        $contextTenantId = $context->get();
+
+        return $contextTenantId !== null ? (string) $contextTenantId : null;
+    }
+
+    private function assertTenantIsolation(DomainToken $token, ?Model $owner): void
+    {
+        if (! Config::get('domain-token-auth.bee_hive.enforce_tenant_isolation', true)) {
+            return;
+        }
+
+        $tenantContextClass = 'Equidna\\BeeHive\\Tenancy\\TenantContext';
+
+        if (! class_exists($tenantContextClass) || ! app()->bound($tenantContextClass)) {
+            return;
+        }
+
+        // Only enforce tenant isolation if the owner actually uses BelongsToTenant
+        $belongsToTenantClass = 'Equidna\\BeeHive\\Traits\\BelongsToTenant';
+        $ownerIsTenantAware = false;
+
+        if ($owner && trait_exists($belongsToTenantClass)) {
+            $ownerIsTenantAware = in_array($belongsToTenantClass, class_uses_recursive($owner), true);
+        }
+
+        if (! $ownerIsTenantAware) {
+            return;
+        }
+
+        // Owner is tenant-aware; enforce tenant isolation
+        if ($token->tenant_id === null) {
+            $allowLegacy = Config::get('domain-token-auth.bee_hive.allow_legacy_tokens_without_tenant_id', false);
+            if (! $allowLegacy) {
+                throw new TokenValidationException('Token missing tenant isolation data. Enable allow_legacy_tokens_without_tenant_id to permit.');
+            }
+            return;
+        }
+
+        /** @var \Equidna\BeeHive\Tenancy\TenantContext $context */
+        $context = app($tenantContextClass);
+
+        if (! $context->has()) {
+            return;
+        }
+
+        if ((string) $context->get() !== $token->tenant_id) {
+            throw new TokenValidationException('Token tenant mismatch.');
+        }
+
+        // Validate that owner's tenant matches the token's tenant
+        if ($owner) {
+            $tenantKey = method_exists($owner, 'getTenantKeyName')
+                ? $owner->getTenantKeyName()
+                : (string) Config::get('bee-hive.tenant_key', 'tenant_id');
+
+            $ownerTenantId = $owner->getAttribute($tenantKey);
+            if ($ownerTenantId !== null && (string) $ownerTenantId !== $token->tenant_id) {
+                throw new TokenValidationException('Token owner tenant mismatch.');
+            }
+        }
+    }
+
+    private function resolveTokenOwner(DomainToken $token): ?Model
+    {
+        $modelClass = Relation::getMorphedModel($token->tokenable_type) ?? $token->tokenable_type;
+
+        if (! is_string($modelClass) || ! class_exists($modelClass) || ! is_subclass_of($modelClass, Model::class)) {
+            return null;
+        }
+
+        /** @var class-string<Model> $modelClass */
+        return $modelClass::withoutGlobalScopes()->whereKey($token->tokenable_id)->first();
+    }
+
+    private function applyTenantContextFromOwner(?Model $owner): void
+    {
+        if (! $owner) {
+            return;
+        }
+
+        if (! Config::get('domain-token-auth.bee_hive.apply_tenant_context', true)) {
+            return;
+        }
+
+        $belongsToTenantClass = 'Equidna\\BeeHive\\Traits\\BelongsToTenant';
+        $tenantContextClass    = 'Equidna\\BeeHive\\Tenancy\\TenantContext';
+
+        if (! trait_exists($belongsToTenantClass)) {
+            return;
+        }
+
+        if (! in_array($belongsToTenantClass, class_uses_recursive($owner), true)) {
+            return;
+        }
+
+        if (! app()->bound($tenantContextClass)) {
+            return;
+        }
+
+        /** @var \Equidna\BeeHive\Tenancy\TenantContext $context */
+        $context = app($tenantContextClass);
+
+        if ($context->has()) {
+            return;
+        }
+
+        $tenantKey = method_exists($owner, 'getTenantKeyName')
+            ? $owner->getTenantKeyName()
+            : (string) Config::get('bee-hive.tenant_key', 'tenant_id');
+
+        $context->set($owner->getAttribute($tenantKey));
     }
 }
