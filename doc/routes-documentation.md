@@ -66,6 +66,7 @@ Incoming HTTP request
         ├─ Token not found in DB → 401 {"message":"Token not found."}
         ├─ Token revoked → 401 {"message":"Token revoked."}
         ├─ Token outside validity window → 401 {"message":"Token out of validity window."}
+        ├─ Token owner not found → 401 {"message":"Token owner not found."}
         ├─ Tenant isolation violated → 401 {"message":"Token tenant mismatch."}
         │
         └─ Valid → stores AuthenticatedDomainToken in request attributes

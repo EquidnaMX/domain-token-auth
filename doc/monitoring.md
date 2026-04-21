@@ -39,13 +39,13 @@ try {
 
 These metrics should be collected by the host application's APM or monitoring stack:
 
-| Metric                                                   | Why it matters                                                                               |
-| -------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| Rate of 401 responses on `domain-token`-protected routes | Spike may indicate credential stuffing or a misconfigured integration                        |
-| `domain_tokens` row count per domain                     | Growth rate shows token issuance volume; unexpected growth may indicate abuse                |
-| `revoked_at IS NOT NULL` count                           | Tracks revocation activity; sudden increases warrant investigation                           |
-| `last_used_at` staleness per domain                      | Tokens not used for a long time may be candidates for cleanup                                |
-| DB query latency on `domain_tokens`                      | The table is indexed by `token_hash`, `domain`, and `tenant_id`; watch for index degradation |
+| Metric                                                   | Why it matters                                                                                                |
+| -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Rate of 401 responses on `domain-token`-protected routes | Spike may indicate credential stuffing or a misconfigured integration                                         |
+| `domain_tokens` row count per domain                     | Growth rate shows token issuance volume; unexpected growth may indicate abuse                                 |
+| `revoked_at IS NOT NULL` count                           | Tracks revocation activity; sudden increases warrant investigation                                            |
+| `last_used_at` staleness per domain                      | Tokens not used for a long time may be candidates for cleanup                                                 |
+| DB query latency on `domain_tokens`                      | The table is indexed by `token_hash`, `domain`, and token owner polymorphic keys; watch for index degradation |
 
 ---
 
@@ -90,8 +90,7 @@ No monitoring tools are bundled with or required by the package. The following t
 **Check:**
 
 1. `DOMAIN_TOKEN_ENFORCE_TENANT_ISOLATION` is set correctly in `.env`.
-2. The active `TenantContext` tenant ID matches the `tenant_id` stored on the token.
-3. If using legacy tokens (issued before `tenant_id` was stored), set `DOMAIN_TOKEN_ALLOW_LEGACY_TOKENS=true`.
+2. The active `TenantContext` tenant ID matches the owner tenant ID.
 
 ### Symptom: `InvalidDomainException` at token issuance
 
@@ -104,7 +103,7 @@ No monitoring tools are bundled with or required by the package. The following t
 
 ### Symptom: Slow queries on large `domain_tokens` tables
 
-The table ships with composite indexes on `(domain, revoked_at)`, `(domain, starts_at, expires_at)`, `(domain, tokenable_type, tokenable_id)`, and `(tenant_id, domain)`. Verify these indexes exist and have not been dropped:
+The table ships with composite indexes on `(domain, revoked_at)`, `(domain, starts_at, expires_at)`, and `(domain, tokenable_type, tokenable_id)`. Verify these indexes exist and have not been dropped:
 
 ```sql
 SHOW INDEX FROM domain_tokens;

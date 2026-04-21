@@ -10,6 +10,33 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ---
 
+## [Unreleased]
+
+### Added
+
+- No unreleased entries yet.
+
+## [v2.0.0] - 2026-04-21 "Boundary"
+
+### Changed
+
+- Authentication now rejects orphan tokens (tokens whose polymorphic owner record no longer exists) with `TokenValidationException("Token owner not found.")` in `DomainTokenManager::authenticate()`.
+- `DomainToken` now resolves its table name from `config('domain-token-auth.token.table')`.
+- Tenant isolation now compares active BeeHive `TenantContext` directly against owner tenant data at authentication time.
+
+### Removed
+
+- Obsolete BeeHive configuration flag `bee_hive.allow_legacy_tokens_without_tenant_id` (`DOMAIN_TOKEN_ALLOW_LEGACY_TOKENS`).
+- Token column `tenant_id` from package migration/model persistence.
+
+### Added
+
+- Feature test `test_rejects_orphan_token_when_owner_is_deleted` in `tests/Feature/DomainTokenFlowTest.php` to prevent regressions.
+- Documentation updates to reflect runtime owner enforcement during authentication:
+  - `doc/business-logic-and-core-processes.md`
+  - `doc/architecture-diagrams.md`
+  - `doc/tests-documentation.md`
+
 ## [v1.0.0] - 2026-04-20 "Keystone"
 
 First stable release of `equidna/domain-token-auth`.
@@ -103,4 +130,6 @@ First stable release of `equidna/domain-token-auth`.
 
 <!-- Links section — update with each release -->
 
-[v1.0.0]: https://github.com/EquidnaMX/domain-token-auth/releases/tag/v1.0.0
+[v2.0.0]: https://github.com/EquidnaMX/domain-token-auth/releases/tag/v2.0.0
+[v1.0.0]: https://github.com/EquidnaMX/domain-token-auth/releases/tag/1.0.0
+[Unreleased]: https://github.com/EquidnaMX/domain-token-auth/compare/v2.0.0...HEAD

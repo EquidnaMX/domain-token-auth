@@ -75,15 +75,7 @@ The `domain-token:generate` Artisan command (`src/Console/Commands/GenerateDomai
 
 ---
 
-### Open question T-2: `allow_legacy_tokens_without_tenant_id` code path untested
-
-The configuration flag `bee_hive.allow_legacy_tokens_without_tenant_id` controls whether tokens without a `tenant_id` are accepted when the owner uses `BelongsToTenant`. This branch exists in `DomainTokenManager::assertTenantIsolation()` but is not exercised by any test.
-
-**Action needed:** Add a test case that sets `DOMAIN_TOKEN_ALLOW_LEGACY_TOKENS=true` and authenticates a token with `tenant_id = null` for a tenant-aware owner.
-
----
-
-### Open question T-3: No-expiry token behavior
+### Open question T-2: No-expiry token behavior
 
 When `default_ttl_minutes = 0` (or when `resolveDefaultExpiration()` returns `null`) and no `expiresAt` is passed, the token should never expire. This code path is not explicitly tested.
 

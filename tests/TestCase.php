@@ -20,9 +20,7 @@ abstract class TestCase extends Orchestra
             'database' => ':memory:',
             'prefix' => '',
         ]);
-        $app['config']->set('bee-hive.tenant_key', 'tenant_id');
         $app['config']->set('bee-hive.resolver', StaticTenantResolver::class);
-        $app['config']->set('bee-hive.static_tenant_id', null);
         $app['config']->set('bee-hive.strict', false);
 
         $app['config']->set('domain-token-auth.domains', [

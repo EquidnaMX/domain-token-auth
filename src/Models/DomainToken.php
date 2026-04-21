@@ -7,8 +7,6 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class DomainToken extends Model
 {
-    protected $table = 'domain_tokens';
-
     protected $fillable = [
         'token_hash',
         'domain',
@@ -17,7 +15,6 @@ class DomainToken extends Model
         'actions',
         'tokenable_type',
         'tokenable_id',
-        'tenant_id',
         'starts_at',
         'expires_at',
         'last_used_at',
@@ -41,6 +38,13 @@ class DomainToken extends Model
     public function tokenable(): MorphTo
     {
         return $this->morphTo();
+    }
+
+    public function getTable(): string
+    {
+        $configuredTable = (string) config('domain-token-auth.token.table', 'domain_tokens');
+
+        return $configuredTable !== '' ? $configuredTable : parent::getTable();
     }
 
     public function isRevoked(): bool

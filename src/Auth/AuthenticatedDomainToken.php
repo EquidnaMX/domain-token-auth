@@ -11,5 +11,7 @@ class AuthenticatedDomainToken
         public readonly DomainToken $token,
         public readonly string $domain,
         public readonly ?Model $owner
-    ) {}
+    ) {
+        //
+    }
 }

@@ -15,6 +15,4 @@ class FakeTenantUser extends Model implements TokenOwner
     protected $table = 'fake_tenant_users';
 
     protected $guarded = [];
-
-    protected string $tenantKey = 'tenant_id';
 }

@@ -75,18 +75,17 @@ Extends `Orchestra\Testbench\TestCase`. Responsibilities:
 
 Covers the full token lifecycle through real HTTP-style requests via Orchestra Testbench's `getJson()` / `postJson()` helpers.
 
-| Test                                                        | What it verifies                                                                              |
-| ----------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| `test_domain_tokens_require_an_owner`                       | `tokenable_type` and `tokenable_id` columns are NOT NULL in the schema                        |
-| `test_can_issue_and_authenticate_token_for_domain`          | A token issued for `user` authenticates successfully on `GET /secured`                        |
-| `test_authentication_sets_tenant_context_from_tenant_owner` | Authenticating a `tenant_user` token writes the owner's `tenant_id` into `TenantContext`      |
-| `test_role_mapped_actions_allow_authorization_checks`       | A token issued with role `admin` grants `users.delete` via `DomainToken::can()`               |
-| `test_rejects_token_with_wrong_domain`                      | A token issued for domain `app` is rejected on a route protected by `domain-token:user`       |
-| `test_rejects_revoked_token`                                | A revoked token returns HTTP 401                                                              |
-| `test_rejects_token_before_start_window`                    | A token with `startsAt` in the future returns HTTP 401                                        |
-| `test_rejects_token_after_expiration`                       | A token with `expiresAt` in the past returns HTTP 401                                         |
-| `test_token_stores_tenant_id_from_owner`                    | The `tenant_id` column on the issued token matches the owner's `tenant_id`                    |
-| `test_rejects_token_when_context_tenant_does_not_match`     | Token is rejected when the active `TenantContext` tenant differs from the token's `tenant_id` |
+| Test                                                    | What it verifies                                                                             |
+| ------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `test_domain_tokens_require_an_owner`                   | `tokenable_type` and `tokenable_id` columns are NOT NULL in the schema                       |
+| `test_can_issue_and_authenticate_token_for_domain`      | A token issued for `user` authenticates successfully on `GET /secured`                       |
+| `test_role_mapped_actions_allow_authorization_checks`   | A token issued with role `admin` grants `users.delete` via `DomainToken::can()`              |
+| `test_rejects_token_with_wrong_domain`                  | A token issued for domain `app` is rejected on a route protected by `domain-token:user`      |
+| `test_rejects_revoked_token`                            | A revoked token returns HTTP 401                                                             |
+| `test_rejects_token_before_start_window`                | A token with `startsAt` in the future returns HTTP 401                                       |
+| `test_rejects_token_after_expiration`                   | A token with `expiresAt` in the past returns HTTP 401                                        |
+| `test_rejects_orphan_token_when_owner_is_deleted`       | A token becomes invalid when its owner record is deleted and authentication returns HTTP 401 |
+| `test_rejects_token_when_context_tenant_does_not_match` | Token is rejected when the active `TenantContext` tenant differs from the owner's tenant_id  |
 
 ---
 
@@ -113,8 +112,9 @@ Directly tests `Equidna\DomainTokenAuth\Support\ActionMatcher` (`src/Support/Act
 - Token issuance, authentication, revocation.
 - Validity window enforcement (`starts_at`, `expires_at`).
 - Domain isolation (wrong domain rejection).
+- Orphan token rejection when the owner no longer exists.
 - Role-to-action expansion.
-- BeeHive tenant context propagation and isolation enforcement.
+- BeeHive tenant isolation enforcement (context mismatch rejection).
 - Action matching (exact, global wildcard, domain wildcard, denial).
 
 **Weakly or not tested:**
@@ -123,7 +123,6 @@ Directly tests `Equidna\DomainTokenAuth\Support\ActionMatcher` (`src/Support/Act
 - Token with `default_ttl_minutes = 0` (no expiry).
 - `DomainToken::revoke()` called on a token that does not exist (edge-case; covered by the `revoke()` return value contract but not explicitly tested).
 - Morph map resolution via `Relation::getMorphedModel()`.
-- `allow_legacy_tokens_without_tenant_id = true` code path.
 
 ---
 

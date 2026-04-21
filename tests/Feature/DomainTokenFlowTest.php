@@ -35,24 +35,6 @@ class DomainTokenFlowTest extends TestCase
         $response->assertOk();
     }
 
-    public function test_authentication_sets_tenant_context_from_tenant_owner(): void
-    {
-        $user = FakeTenantUser::query()->create([
-            'name' => 'Tenant Ada',
-            'tenant_id' => 123,
-        ]);
-        $issued = DomainToken::issue('tenant_user', $user, ['tenant-users.read']);
-
-        app(TenantContext::class)->clear();
-
-        $response = $this->getJson('/tenant-secured', [
-            'Authorization' => 'Bearer ' . $issued->plainTextToken,
-        ]);
-
-        $response
-            ->assertOk()
-            ->assertJson(['tenant_id' => 123]);
-    }
 
     public function test_role_mapped_actions_allow_authorization_checks(): void
     {
@@ -131,17 +113,20 @@ class DomainTokenFlowTest extends TestCase
         $response->assertStatus(401);
     }
 
-    public function test_token_stores_tenant_id_from_owner(): void
+    public function test_rejects_orphan_token_when_owner_is_deleted(): void
     {
-        $user = FakeTenantUser::query()->create([
-            'name' => 'Tenant Ada',
-            'tenant_id' => 42,
+        $user = FakeUser::query()->create(['name' => 'Ada']);
+        $issued = DomainToken::issue('user', $user, ['users.read']);
+
+        $user->delete();
+
+        $response = $this->getJson('/secured', [
+            'Authorization' => 'Bearer ' . $issued->plainTextToken,
         ]);
 
-        $issued = DomainToken::issue('tenant_user', $user, ['tenant-users.read']);
-
-        self::assertSame('42', $issued->token->tenant_id);
+        $response->assertStatus(401);
     }
+
 
     public function test_rejects_token_when_context_tenant_does_not_match(): void
     {

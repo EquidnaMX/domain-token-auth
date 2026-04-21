@@ -12,7 +12,6 @@ return [
     'bee_hive' => [
         'apply_tenant_context' => env('DOMAIN_TOKEN_APPLY_TENANT_CONTEXT', true),
         'enforce_tenant_isolation' => env('DOMAIN_TOKEN_ENFORCE_TENANT_ISOLATION', true),
-        'allow_legacy_tokens_without_tenant_id' => env('DOMAIN_TOKEN_ALLOW_LEGACY_TOKENS', false),
     ],
 
     'token' => [

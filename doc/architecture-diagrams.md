@@ -207,11 +207,17 @@ sequenceDiagram
                 Middleware-->>Client: 401 {"message":"..."}
             else Valid
                 Manager->>DB: UPDATE last_used_at=now()
-                Manager->>BeeHive: TenantContext::set(owner.tenant_id)
-                Manager-->>Middleware: AuthenticatedDomainToken
-                Middleware->>Middleware: $request->attributes->set(key, context)
-                Middleware->>Controller: $next($request)
-                Controller-->>Client: 200 response
+                Manager->>Manager: resolve polymorphic owner
+                alt Owner not found
+                    Manager-->>Middleware: throws TokenValidationException
+                    Middleware-->>Client: 401 {"message":"Token owner not found."}
+                else Owner found
+                    Manager->>BeeHive: TenantContext::set(owner.tenant_id)
+                    Manager-->>Middleware: AuthenticatedDomainToken
+                    Middleware->>Middleware: $request->attributes->set(key, context)
+                    Middleware->>Controller: $next($request)
+                    Controller-->>Client: 200 response
+                end
             end
         end
     end

@@ -64,8 +64,7 @@ No dedicated `.env` variables are required by the package for basic operation. T
 | Variable                                | Default | Description                                                                               |
 | --------------------------------------- | ------- | ----------------------------------------------------------------------------------------- |
 | `DOMAIN_TOKEN_APPLY_TENANT_CONTEXT`     | `true`  | Whether to write the owner's tenant ID into `TenantContext` after authentication          |
-| `DOMAIN_TOKEN_ENFORCE_TENANT_ISOLATION` | `true`  | Whether to reject tokens whose `tenant_id` doesn't match the active `TenantContext`       |
-| `DOMAIN_TOKEN_ALLOW_LEGACY_TOKENS`      | `false` | Whether to allow authentication of tokens that have no `tenant_id` stored (legacy tokens) |
+| `DOMAIN_TOKEN_ENFORCE_TENANT_ISOLATION` | `true`  | Whether to reject authentication when active `TenantContext` differs from owner tenant ID |
 
 These variables are only meaningful when `equidna/bee-hive` is installed and the owner model uses `BelongsToTenant`.
 
@@ -139,7 +138,6 @@ The migration at `src/database/migrations/2026_04_06_000000_create_domain_tokens
 | `actions`        | JSON        | Resolved actions                          |
 | `tokenable_type` | varchar     | Polymorphic owner type                    |
 | `tokenable_id`   | varchar     | Polymorphic owner ID                      |
-| `tenant_id`      | varchar     | Optional BeeHive tenant isolation         |
 | `starts_at`      | timestamp   | Validity window start                     |
 | `expires_at`     | timestamp   | Validity window end                       |
 | `last_used_at`   | timestamp   | Updated on each successful authentication |

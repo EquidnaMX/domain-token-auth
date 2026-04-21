@@ -8,11 +8,16 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (Schema::hasTable('domain_tokens')) {
+        $table = (string) config('domain-token-auth.token.table', 'domain_tokens');
+        if ($table === '') {
+            $table = 'domain_tokens';
+        }
+
+        if (Schema::hasTable($table)) {
             return;
         }
 
-        Schema::create('domain_tokens', function (Blueprint $table): void {
+        Schema::create($table, function (Blueprint $table): void {
             $table->id();
             $table->char('token_hash', 64)->unique();
             $table->string('domain', 64);
@@ -20,7 +25,6 @@ return new class extends Migration
             $table->json('roles')->nullable();
             $table->json('actions')->nullable();
             $table->morphs('tokenable');
-            $table->string('tenant_id')->nullable();
             $table->timestamp('starts_at')->nullable();
             $table->timestamp('expires_at')->nullable();
             $table->timestamp('last_used_at')->nullable();
@@ -31,12 +35,16 @@ return new class extends Migration
             $table->index(['domain', 'revoked_at']);
             $table->index(['domain', 'starts_at', 'expires_at']);
             $table->index(['domain', 'tokenable_type', 'tokenable_id']);
-            $table->index(['tenant_id', 'domain']);
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('domain_tokens');
+        $table = (string) config('domain-token-auth.token.table', 'domain_tokens');
+        if ($table === '') {
+            $table = 'domain_tokens';
+        }
+
+        Schema::dropIfExists($table);
     }
 };

@@ -6,6 +6,59 @@ All AI agents and maintainers **must** update this file whenever a release intro
 
 ---
 
+## v2.0.0
+
+### 1. `tenant_id` removed from token persistence
+
+What changed:
+
+- Package migration no longer creates `tenant_id` on token table.
+- Package model no longer persists/reads token-level `tenant_id`.
+
+Why:
+
+- Tenant identity is now derived from the resolved owner at authentication time.
+- This avoids duplicated tenant state between token row and owner row.
+
+Migration steps:
+
+1. Remove any host-app query logic that filters token rows by `tenant_id`.
+2. If you previously added a custom `tenant_id` index/query path, replace it with owner-based checks.
+3. If your production database still has `tenant_id`, keep it only as legacy data or drop it with a host-app migration after validating no code references remain.
+
+### 2. Legacy BeeHive config key removed
+
+What changed:
+
+- Removed config key `bee_hive.allow_legacy_tokens_without_tenant_id`.
+- Removed env var `DOMAIN_TOKEN_ALLOW_LEGACY_TOKENS`.
+
+Why:
+
+- There is no longer token-level `tenant_id` compatibility mode to control.
+
+Migration steps:
+
+1. Remove `DOMAIN_TOKEN_ALLOW_LEGACY_TOKENS` from `.env` and deployment templates.
+2. Remove references to `bee_hive.allow_legacy_tokens_without_tenant_id` from host configuration overrides.
+
+### 3. Authentication now rejects orphan tokens
+
+What changed:
+
+- Tokens whose polymorphic owner cannot be resolved are now rejected with `TokenValidationException("Token owner not found.")`.
+
+Why:
+
+- Prevents authentication for tokens that no longer map to a valid owner record.
+
+Migration steps:
+
+1. Ensure owner lifecycle policies handle token cleanup or revocation when owners are deleted.
+2. Expect HTTP 401 for orphan tokens in protected routes and update client handling accordingly.
+
+---
+
 ## v1.0.0 — Initial Stable Release
 
 `v1.0.0` is the first stable release. There are no prior stable versions to break compatibility with.

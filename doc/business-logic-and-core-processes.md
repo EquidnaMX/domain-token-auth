@@ -45,8 +45,7 @@ flowchart TD
     F --> G[Hash with SHA-256]
     G --> H[Resolve validity window\nstartsAt / expiresAt / TTL]
     H --> I[Resolve actions\ndefault_actions + role actions + requested actions]
-    I --> J[Resolve tenant_id from owner\nor active TenantContext]
-    J --> K[INSERT into domain_tokens\nwrapped in DB transaction]
+    I --> K[INSERT into domain_tokens\nwrapped in DB transaction]
     K --> L([return IssuedToken\nplainTextToken + DomainToken model])
 ```
 
@@ -56,7 +55,6 @@ flowchart TD
 - Only the SHA-256 hash is persisted; the plain-text token is shown exactly once.
 - Actions are the union of `default_actions`, role-mapped actions, and any directly requested actions. All are normalized to lowercase.
 - If the domain defines `default_ttl_minutes`, it takes precedence over the global `token.default_ttl_minutes`. If the resolved TTL is zero or null and no `expiresAt` is provided, the token never expires.
-- The owner's `tenant_id` is embedded in the token at issuance time for later isolation enforcement.
 
 ---
 
@@ -99,11 +97,13 @@ sequenceDiagram
     end
     Mgr->>DB: UPDATE last_used_at=now()
     Mgr->>Owner: resolve polymorphic owner
+    alt owner not found
+        Mgr-->>MW: TokenValidationException("Token owner not found.")
+    end
     Mgr->>Mgr: assertTenantIsolation(token, owner)
     alt tenant mismatch
         Mgr-->>MW: TokenValidationException("Token tenant mismatch.")
     end
-    Mgr->>TC: set(owner.tenant_id) [if BeeHive enabled]
     Mgr-->>MW: AuthenticatedDomainToken
     MW->>MW: $request->attributes->set(key, context)
 ```
@@ -113,7 +113,9 @@ sequenceDiagram
 - Authentication is always domain-scoped: the DB query filters on both `token_hash` and `domain`.
 - `isRevoked()` returns `true` when `revoked_at IS NOT NULL`. There is no un-revoke operation.
 - `isWithinWindow(now())` enforces `starts_at <= now()` (when set) and `now() <= expires_at` (when set).
-- If the owner model uses `BelongsToTenant` (BeeHive), tenant isolation is enforced: the active `TenantContext` tenant must match the token's `tenant_id`. Configurable via `DOMAIN_TOKEN_ENFORCE_TENANT_ISOLATION`.
+- If the polymorphic owner cannot be resolved (deleted or invalid model mapping), authentication fails with `TokenValidationException("Token owner not found.")`.
+- Tenant isolation is enforced by comparing the active `TenantContext` tenant with the owner's tenant ID at authentication time.
+- If `apply_tenant_context` is enabled, and no tenant is active, the package sets `TenantContext` from owner tenant ID when available.
 - The authenticated context is stored in `$request->attributes` under `_domain_token_auth_context` for downstream access.
 
 ---
@@ -183,11 +185,11 @@ flowchart TD
 
 ## Business Invariants
 
-| Invariant                                            | Enforcement point                                                                 |
-| ---------------------------------------------------- | --------------------------------------------------------------------------------- |
-| Every token must have an owner                       | DB `NOT NULL` on `tokenable_type` and `tokenable_id`; validated at issuance       |
-| Owner model must match the domain's configured model | `assertModelAllowedForDomain()` in `DomainTokenManager::issue()`                  |
-| Owner must implement `TokenOwner`                    | `assertTokenOwnerContract()` in `DomainTokenManager::issue()`                     |
-| Plain-text token is never stored                     | Only SHA-256 hash persisted; plain text discarded after `IssuedToken` is returned |
-| Revocation is permanent                              | `revoked_at` is set-only; no un-revoke path exists in the codebase                |
-| Tenant isolation is enforced at authentication time  | `assertTenantIsolation()` in `DomainTokenManager::authenticate()`                 |
+| Invariant                                            | Enforcement point                                                                                                                   |
+| ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Every token must have an owner                       | DB `NOT NULL` on `tokenable_type` and `tokenable_id`; validated at issuance; rejected at authentication if owner cannot be resolved |
+| Owner model must match the domain's configured model | `assertModelAllowedForDomain()` in `DomainTokenManager::issue()`                                                                    |
+| Owner must implement `TokenOwner`                    | `assertTokenOwnerContract()` in `DomainTokenManager::issue()`                                                                       |
+| Plain-text token is never stored                     | Only SHA-256 hash persisted; plain text discarded after `IssuedToken` is returned                                                   |
+| Revocation is permanent                              | `revoked_at` is set-only; no un-revoke path exists in the codebase                                                                  |
+| Tenant isolation is enforced at authentication time  | `assertTenantIsolation()` in `DomainTokenManager::authenticate()`                                                                   |
