@@ -13,6 +13,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ## [Unreleased]
 
 ### Added
+
 - No unreleased entries yet.
 
 ## [v2.1.0] - 2026-04-22 "Signal"

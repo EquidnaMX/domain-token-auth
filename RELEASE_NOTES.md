@@ -1,95 +1,87 @@
-# Release v1.0.0 "Keystone"
+# Release v2.1.0 "Signal"
 
 **Package:** `equidna/domain-token-auth`  
-**Date:** 2026-04-20  
-**Tag:** `v1.0.0`
+**Date:** 2026-04-22  
+**Tag:** `2.1.0`
 
 ---
 
 ## Summary
 
-`equidna/domain-token-auth` `v1.0.0` is the first stable, production-ready release of the Equidna domain-scoped token authentication library for Laravel.
+`v2.1.0` is a minor release focused on token metadata and runtime ergonomics.
 
-The codename **Keystone** reflects the role this package plays in the Equidna ecosystem: it is the foundational authentication layer on which higher-level services are built. A keystone is the central stone of an arch — remove it and everything collapses; get it right and everything holds.
+The codename **Signal** highlights that tokens can now carry explicit, structured context (`data`) that downstream application code can consume safely after authentication.
 
-This release delivers a complete, zero-breaking-change API for issuing, authenticating, revoking, and authorizing opaque tokens that are scoped to named functional domains. It ships with optional first-class integration with `equidna/bee-hive` for multi-tenant isolation, and with comprehensive documentation covering deployment, architecture, API, business logic, and monitoring.
+This release is backward-compatible with `v2.0.0` and includes API additions, a schema evolution for metadata payload, CLI improvements, and stronger test portability for environments where BeeHive is optional.
 
 ---
 
 ## Highlights
 
-- **Domain-scoped opaque tokens** — tokens are issued per named domain (e.g., `user`, `app`) and are strictly rejected outside their domain.
-- **SHA-256 only storage** — the plain-text token (`dtk_` + 64 random characters) is returned exactly once; only the hash is persisted.
-- **Fine-grained action authorization** — `ActionMatcher` supports exact actions, domain wildcards (`users.*`), and global wildcard (`*`), normalized and case-insensitive.
-- **Role-to-action expansion** — domain roles defined in config are expanded to concrete action lists at issuance time.
-- **Validity window enforcement** — `starts_at` / `expires_at` optional window checked at authentication time; `last_used_at` is updated on every successful authentication.
-- **Soft revocation** — tokens are revoked by writing `revoked_at`; revocation is irreversible by design.
-- **Polymorphic owner** — any Eloquent model implementing `TokenOwner` (via `HasDomainTokens` trait) can own tokens.
-- **BeeHive multi-tenant integration** (optional) — tenant isolation enforced at authentication time; `TenantContext` automatically propagated after successful auth.
-- **Laravel middleware** — `domain-token:{domain}` middleware protects route groups with a single line.
-- **Artisan command** — `domain-token:generate` for CLI token issuance (scripting, onboarding, CI pipelines).
-- **Production-grade documentation** — 9 dedicated doc files covering deployment, API, architecture, business logic, monitoring, and open questions.
+- **Custom token metadata** with optional `data` payload at issuance.
+- **Runtime metadata accessors** via `DomainToken::context()` and `DomainToken::data()`.
+- **Authenticated context helper** `AuthenticatedDomainToken::data()`.
+- **Schema evolution** with JSON `data` column migration.
+- **CLI extension** with `domain-token:generate --data='{"key":"value"}'`.
+- **Test reliability improvements** in environments without BeeHive.
 
 ---
 
 ## Added
 
-### Core Token Lifecycle
+- Optional `data` parameter in `DomainToken::issue()` and `DomainTokenManager::issue()`.
+- Migration `2026_04_22_000001_add_data_to_domain_tokens_table.php` adding nullable JSON `data`.
+- Runtime helpers:
+  - `DomainToken::context()`
+  - `DomainToken::data(?string $key = null, mixed $default = null)`
+  - `AuthenticatedDomainToken::data(?string $key = null, mixed $default = null)`
+- Artisan command support for `--data` JSON payload.
+- Feature tests validating metadata persistence and post-auth metadata consumption.
 
-- `DomainTokenManager` service: `issue()`, `authenticate()`, `revoke()`, `can()`.
-- `DomainToken` facade and injectable entry-point class.
-- Service provider with auto-discovery, singleton registration, and asset publishing.
+## Changed
 
-### Persistence
+- Testbench setup now handles BeeHive as optional dependency during test execution.
+- Tenant mismatch test is conditionally skipped when BeeHive classes are not available.
+- Documentation aligned with the current metadata API and CLI surface.
 
-- `domain_tokens` database table with SHA-256 hash storage, polymorphic owner, validity window, revocation, roles/actions (JSON), and optional `tenant_id`.
-- Four composite database indexes tuned for middleware-path queries.
+## Fixed
 
-### Middleware & API
-
-- `ValidateDomainToken` middleware (`domain-token:{domain}`) — JSON 401 on failure.
-- Full `Authorization: Bearer` header parsing.
-
-### Authorization
-
-- `ActionMatcher` utility with wildcard support.
-- Role-to-action expansion at issuance time via domain config.
-
-### Multi-tenant Support (BeeHive integration)
-
-- `tenant_id` stored and validated per token.
-- Configurable: `enforce_tenant_isolation`, `apply_tenant_context`, `allow_legacy_tokens_without_tenant_id`.
-
-### CLI
-
-- `domain-token:generate` Artisan command with full argument and option set.
-
-### Tests
-
-- 11 tests / 11 assertions — Feature and Unit suites using Orchestra Testbench + in-memory SQLite.
-
-### Documentation
-
-- `README.md`, `doc/deployment-instructions.md`, `doc/api-documentation.md`, `doc/routes-documentation.md`, `doc/artisan-commands.md`, `doc/tests-documentation.md`, `doc/architecture-diagrams.md`, `doc/monitoring.md`, `doc/business-logic-and-core-processes.md`, `doc/open-questions-and-assumptions.md`.
+- `DomainToken::data()`/`DomainToken::context()` now resolve from the active request instance to avoid null context reads during authenticated request lifecycle usage.
 
 ---
 
 ## Breaking Changes
 
-None — this is the initial stable release. See [BREAKING_CHANGES.md](BREAKING_CHANGES.md) for baseline contracts.
+None in `v2.1.0`. See [BREAKING_CHANGES.md](BREAKING_CHANGES.md) for historical migration notes.
 
 ---
 
 ## Upgrade / Migration Guide
 
-This is the first stable release. No upgrade path required.  
-For installation and setup, see [doc/deployment-instructions.md](doc/deployment-instructions.md).
+1. Pull and install package update.
+2. Run migrations to add the `data` column:
+
+```bash
+php artisan migrate
+```
+
+3. Optionally adopt metadata access in application logic:
+
+```php
+$issued = DomainToken::issue(
+		domain: 'user',
+		owner: $user,
+		data: ['client' => 'mobile']
+);
+
+$client = DomainToken::data('client');
+```
 
 ---
 
 ## References
 
 - Full history: [CHANGELOG.md](CHANGELOG.md)
-- Breaking changes & contracts: [BREAKING_CHANGES.md](BREAKING_CHANGES.md)
-- Deployment guide: [doc/deployment-instructions.md](doc/deployment-instructions.md)
+- Breaking changes & migration guidance: [BREAKING_CHANGES.md](BREAKING_CHANGES.md)
 - API reference: [doc/api-documentation.md](doc/api-documentation.md)
+- Deployment guide: [doc/deployment-instructions.md](doc/deployment-instructions.md)
