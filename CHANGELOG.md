@@ -14,7 +14,25 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Added
 
-- No unreleased entries yet.
+- Token custom metadata payload support via new optional `data` parameter in `DomainToken::issue()` and `DomainTokenManager::issue()`.
+- New migration `2026_04_22_000001_add_data_to_domain_tokens_table.php` adding nullable JSON column `data`.
+- Runtime metadata helpers:
+  - `DomainToken::context()`
+  - `DomainToken::data(?string $key = null, mixed $default = null)`
+  - `AuthenticatedDomainToken::data(?string $key = null, mixed $default = null)`
+- Artisan option `--data` in `domain-token:generate` for passing JSON metadata.
+- Feature tests for metadata persistence and consumption after authentication.
+
+### Changed
+
+- Documentation updated to reflect token metadata support and current API/CLI behavior:
+  - `README.md`
+  - `doc/deployment-instructions.md`
+  - `doc/api-documentation.md`
+  - `doc/artisan-commands.md`
+  - `doc/tests-documentation.md`
+  - `doc/business-logic-and-core-processes.md`
+  - `doc/architecture-diagrams.md`
 
 ## [v2.0.0] - 2026-04-21 "Boundary"
 

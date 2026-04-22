@@ -3,6 +3,7 @@
 namespace Equidna\DomainTokenAuth;
 
 use DateTimeInterface;
+use Equidna\DomainTokenAuth\Auth\AuthenticatedDomainToken;
 use Equidna\DomainTokenAuth\DTO\IssuedToken;
 use Equidna\DomainTokenAuth\Models\DomainToken as DomainTokenModel;
 use Equidna\DomainTokenAuth\Services\DomainTokenManager;
@@ -23,7 +24,8 @@ class DomainToken
         array $roles = [],
         ?DateTimeInterface $startsAt = null,
         ?DateTimeInterface $expiresAt = null,
-        ?string $name = null
+        ?string $name = null,
+        array $data = []
     ): IssuedToken {
         return $this->manager->issue(
             domain: $domain,
@@ -32,7 +34,8 @@ class DomainToken
             roles: $roles,
             startsAt: $startsAt,
             expiresAt: $expiresAt,
-            name: $name
+            name: $name,
+            data: $data
         );
     }
 
@@ -48,12 +51,36 @@ class DomainToken
 
     public function can(string $action, ?DomainTokenModel $token = null): bool
     {
-        $resolved = $token ?? $this->request->attributes->get(DomainTokenManager::requestContextKey())?->token;
+        $resolved = $token ?? $this->context()?->token;
 
         if (! $resolved instanceof DomainTokenModel) {
             return false;
         }
 
         return $this->manager->can($resolved, $action);
+    }
+
+    public function context(): ?AuthenticatedDomainToken
+    {
+        $request = app('request');
+
+        if (! $request instanceof Request) {
+            $request = $this->request;
+        }
+
+        $context = $request->attributes->get(DomainTokenManager::requestContextKey());
+
+        return $context instanceof AuthenticatedDomainToken ? $context : null;
+    }
+
+    public function data(?string $key = null, mixed $default = null): mixed
+    {
+        $context = $this->context();
+
+        if (! $context) {
+            return $key === null ? [] : $default;
+        }
+
+        return $context->data($key, $default);
     }
 }

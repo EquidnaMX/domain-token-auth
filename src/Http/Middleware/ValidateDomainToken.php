@@ -11,7 +11,10 @@ use Symfony\Component\HttpFoundation\Response;
 
 class ValidateDomainToken
 {
-    public function __construct(private readonly DomainTokenManager $tokenManager) {}
+    public function __construct(private readonly DomainTokenManager $tokenManager)
+    {
+        //
+    }
 
     public function handle(Request $request, Closure $next, string $domain): Response
     {

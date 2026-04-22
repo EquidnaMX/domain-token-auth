@@ -17,6 +17,7 @@ class GenerateDomainToken extends Command
         {owner_id : Owner model key}
         {--roles= : CSV roles list (example: admin,viewer)}
         {--actions= : CSV actions list (example: users.read,users.write)}
+        {--data= : Optional JSON object payload (example: {"client":"mobile","scope":"sync"})}
         {--name= : Optional token name}
         {--starts-at= : Start datetime (Y-m-d H:i:s)}
         {--expires-at= : Expiration datetime (Y-m-d H:i:s)}';
@@ -66,8 +67,9 @@ class GenerateDomainToken extends Command
 
         $startsAt = $this->parseDateOption('starts-at');
         $expiresAt = $this->parseDateOption('expires-at');
+        $data = $this->parseDataOption();
 
-        if ($startsAt === false || $expiresAt === false) {
+        if ($startsAt === false || $expiresAt === false || $data === false) {
             return self::FAILURE;
         }
 
@@ -79,6 +81,7 @@ class GenerateDomainToken extends Command
             startsAt: $startsAt,
             expiresAt: $expiresAt,
             name: $this->option('name') ? (string) $this->option('name') : null,
+            data: $data,
         );
 
         $this->info('Token generated successfully. Copy this value now, it will not be shown again:');
@@ -100,5 +103,28 @@ class GenerateDomainToken extends Command
             $this->error(sprintf('Invalid date format for --%s. Use Y-m-d H:i:s or ISO8601.', $key));
             return false;
         }
+    }
+
+    private function parseDataOption(): array|false
+    {
+        $raw = $this->option('data');
+
+        if (! is_string($raw) || trim($raw) === '') {
+            return [];
+        }
+
+        try {
+            $decoded = json_decode($raw, true, 512, JSON_THROW_ON_ERROR);
+        } catch (\Throwable) {
+            $this->error('Invalid JSON for --data. Expected an object, for example: {"client":"mobile"}.');
+            return false;
+        }
+
+        if (! is_array($decoded)) {
+            $this->error('Invalid --data payload. JSON must decode to an object.');
+            return false;
+        }
+
+        return $decoded;
     }
 }

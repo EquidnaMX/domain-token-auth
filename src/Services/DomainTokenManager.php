@@ -29,7 +29,8 @@ class DomainTokenManager
         array $roles = [],
         ?DateTimeInterface $startsAt = null,
         ?DateTimeInterface $expiresAt = null,
-        ?string $name = null
+        ?string $name = null,
+        array $data = []
     ): IssuedToken {
         $domainConfig = $this->resolveDomainConfig($domain);
         $this->assertModelAllowedForDomain($owner, $domainConfig['model']);
@@ -40,16 +41,18 @@ class DomainTokenManager
         $tokenPrefix = (string) Arr::get($tokenConfig, 'prefix', 'dtk_');
 
         $plainToken = $tokenPrefix . Str::random($tokenLength);
-        $tokenHash = hash('sha256', $plainToken);
+        $tokenHash  = hash('sha256', $plainToken);
 
-        $resolvedStartsAt = $startsAt ? Carbon::instance(Carbon::parse($startsAt)) : Carbon::now();
+        $resolvedStartsAt  = $startsAt ? Carbon::instance(Carbon::parse($startsAt)) : Carbon::now();
         $resolvedExpiresAt = $expiresAt ? Carbon::instance(Carbon::parse($expiresAt)) : $this->resolveDefaultExpiration($domainConfig);
 
-        $grantedActions = $this->resolveActions($roles, $actions, $domainConfig);
+        $grantedActions  = $this->resolveActions($roles, $actions, $domainConfig);
         $normalizedRoles = array_values(array_unique(array_filter(array_map(
             fn(string $role): string => strtolower(trim($role)),
             $roles
         ))));
+
+        $normalizedData = $this->normalizeData($data);
 
 
         $token = DB::transaction(function () use (
@@ -58,6 +61,7 @@ class DomainTokenManager
             $name,
             $normalizedRoles,
             $grantedActions,
+            $normalizedData,
             $owner,
             $resolvedStartsAt,
             $resolvedExpiresAt
@@ -68,6 +72,7 @@ class DomainTokenManager
                 'name' => $name,
                 'roles' => $normalizedRoles,
                 'actions' => $grantedActions,
+                'data' => $normalizedData,
                 'tokenable_type' => $owner->getMorphClass(),
                 'tokenable_id' => (string) $owner->getKey(),
                 'starts_at' => $resolvedStartsAt,
@@ -236,6 +241,26 @@ class DomainTokenManager
         ])));
 
         return $actions;
+    }
+
+    private function normalizeData(array $data): array
+    {
+        $normalized = [];
+
+        foreach ($data as $key => $value) {
+            if (! is_string($key)) {
+                continue;
+            }
+
+            $trimmedKey = trim($key);
+            if ($trimmedKey === '') {
+                continue;
+            }
+
+            $normalized[$trimmedKey] = $value;
+        }
+
+        return $normalized;
     }
 
 

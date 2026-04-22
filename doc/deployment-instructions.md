@@ -124,27 +124,33 @@ class User extends Model implements TokenOwner
 
 ---
 
-## Database Migration
+## Database Migrations
 
-The migration at `src/database/migrations/2026_04_06_000000_create_domain_tokens_table.php` creates the `domain_tokens` table with the following key columns:
+The package now includes two migrations:
 
-| Column           | Type        | Notes                                     |
-| ---------------- | ----------- | ----------------------------------------- |
-| `id`             | bigint      | Primary key                               |
-| `token_hash`     | char(64)    | SHA-256 hash, unique                      |
-| `domain`         | varchar(64) | Functional domain name                    |
-| `name`           | varchar     | Optional human label                      |
-| `roles`          | JSON        | Roles granted to this token               |
-| `actions`        | JSON        | Resolved actions                          |
-| `tokenable_type` | varchar     | Polymorphic owner type                    |
-| `tokenable_id`   | varchar     | Polymorphic owner ID                      |
-| `starts_at`      | timestamp   | Validity window start                     |
-| `expires_at`     | timestamp   | Validity window end                       |
-| `last_used_at`   | timestamp   | Updated on each successful authentication |
-| `revoked_at`     | timestamp   | Set on revocation; irreversible           |
-| `revoked_reason` | varchar     | Optional revocation reason                |
+- `src/database/migrations/2026_04_06_000000_create_domain_tokens_table.php`
+- `src/database/migrations/2026_04_22_000001_add_data_to_domain_tokens_table.php`
 
-The migration is idempotent: it checks `Schema::hasTable('domain_tokens')` before creating.
+Together they create and evolve the `domain_tokens` table with the following key columns:
+
+| Column           | Type        | Notes                                                 |
+| ---------------- | ----------- | ----------------------------------------------------- |
+| `id`             | bigint      | Primary key                                           |
+| `token_hash`     | char(64)    | SHA-256 hash, unique                                  |
+| `domain`         | varchar(64) | Functional domain name                                |
+| `name`           | varchar     | Optional human label                                  |
+| `roles`          | JSON        | Roles granted to this token                           |
+| `actions`        | JSON        | Resolved actions                                      |
+| `data`           | JSON        | Optional custom payload available post-authentication |
+| `tokenable_type` | varchar     | Polymorphic owner type                                |
+| `tokenable_id`   | varchar     | Polymorphic owner ID                                  |
+| `starts_at`      | timestamp   | Validity window start                                 |
+| `expires_at`     | timestamp   | Validity window end                                   |
+| `last_used_at`   | timestamp   | Updated on each successful authentication             |
+| `revoked_at`     | timestamp   | Set on revocation; irreversible                       |
+| `revoked_reason` | varchar     | Optional revocation reason                            |
+
+Migrations are idempotent: table and column existence are checked before modifications.
 
 ---
 

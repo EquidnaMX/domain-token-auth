@@ -14,4 +14,15 @@ class AuthenticatedDomainToken
     ) {
         //
     }
+
+    public function data(?string $key = null, mixed $default = null): mixed
+    {
+        $payload = (array) ($this->token->data ?? []);
+
+        if ($key === null) {
+            return $payload;
+        }
+
+        return $payload[$key] ?? $default;
+    }
 }

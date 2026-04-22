@@ -22,6 +22,7 @@ php artisan domain-token:generate
     {owner_id : Primary key of the owner model}
     [--roles=]
     [--actions=]
+    [--data=]
     [--name=]
     [--starts-at=]
     [--expires-at=]
@@ -44,6 +45,7 @@ php artisan domain-token:generate
 | -------------- | -------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
 | `--roles`      | No       | CSV string               | Comma-separated list of roles. Each role must be defined under the domain's `roles` map. Example: `admin,viewer`                     |
 | `--actions`    | No       | CSV string               | Comma-separated list of additional actions to grant directly, beyond those resolved from roles. Example: `users.export,users.report` |
+| `--data`       | No       | JSON object              | Optional metadata payload persisted in the token `data` column. Example: `{"client":"mobile","scope":"sync"}`                        |
 | `--name`       | No       | String                   | Optional human-readable label to identify the token (stored in `name` column)                                                        |
 | `--starts-at`  | No       | `Y-m-d H:i:s` or ISO8601 | Start of the validity window. Defaults to the current time if omitted                                                                |
 | `--expires-at` | No       | `Y-m-d H:i:s` or ISO8601 | End of the validity window. Defaults to the domain or global TTL if omitted                                                          |
@@ -76,6 +78,12 @@ php artisan domain-token:generate user 42 --roles=viewer --name="Reporting servi
 php artisan domain-token:generate app 15 --roles=integrator --actions=apps.webhook --expires-at="2026-12-31 23:59:59"
 ```
 
+**With custom token data payload:**
+
+```bash
+php artisan domain-token:generate user 7 --roles=viewer --data='{"client":"mobile","region":"mx"}'
+```
+
 **With a start date (token not valid until then):**
 
 ```bash
@@ -93,7 +101,7 @@ Token generated successfully. Copy this value now, it will not be shown again:
 dtk_<64 random characters>
 ```
 
-On failure (invalid domain, model not found, model does not implement `TokenOwner`, invalid date), the command prints an error message and exits with `FAILURE` (exit code 1).
+On failure (invalid domain, model not found, model does not implement `TokenOwner`, invalid date, or invalid `--data` JSON), the command prints an error message and exits with `FAILURE` (exit code 1).
 
 ---
 

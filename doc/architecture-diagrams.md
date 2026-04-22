@@ -83,10 +83,12 @@ classDiagram
     direction LR
 
     class DomainToken {
-        +issue(domain, owner, actions, roles, startsAt, expiresAt, name) IssuedToken
+        +issue(domain, owner, actions, roles, startsAt, expiresAt, name, data) IssuedToken
         +authenticate(plainToken, domain) AuthenticatedDomainToken
         +revoke(plainToken, reason) bool
         +can(action, token) bool
+        +context() AuthenticatedDomainToken|null
+        +data(key, default) mixed
     }
 
     class DomainTokenFacade {
@@ -117,6 +119,7 @@ classDiagram
         +tokenable() MorphTo
         +isRevoked() bool
         +isWithinWindow(at) bool
+        +data array|null
     }
 
     class IssuedToken {
@@ -130,6 +133,7 @@ classDiagram
         +token DomainToken
         +domain string
         +owner Model|null
+        +data(key, default) mixed
     }
 
     class TokenOwner {

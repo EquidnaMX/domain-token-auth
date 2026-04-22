@@ -21,7 +21,7 @@ This design ensures that a token issued for an `app` owner cannot authenticate a
 
 ## Process 1: Token Issuance
 
-**Why it exists:** A caller (code or operator) needs to create a new token tied to a specific owner within a domain, optionally scoped to roles and additional actions.
+**Why it exists:** A caller (code or operator) needs to create a new token tied to a specific owner within a domain, optionally scoped to roles, additional actions, and custom metadata (`data`).
 
 **Main classes involved:**
 
@@ -45,7 +45,8 @@ flowchart TD
     F --> G[Hash with SHA-256]
     G --> H[Resolve validity window\nstartsAt / expiresAt / TTL]
     H --> I[Resolve actions\ndefault_actions + role actions + requested actions]
-    I --> K[INSERT into domain_tokens\nwrapped in DB transaction]
+    I --> J[Normalize token data payload\ntrim keys, discard empty keys]
+    J --> K[INSERT into domain_tokens\nwrapped in DB transaction]
     K --> L([return IssuedToken\nplainTextToken + DomainToken model])
 ```
 
@@ -54,6 +55,7 @@ flowchart TD
 - The plain-text token is generated using `dtk_` + `Str::random(64)`. The prefix and length are configurable.
 - Only the SHA-256 hash is persisted; the plain-text token is shown exactly once.
 - Actions are the union of `default_actions`, role-mapped actions, and any directly requested actions. All are normalized to lowercase.
+- Custom `data` payload is stored as JSON and can be consumed later from authenticated context.
 - If the domain defines `default_ttl_minutes`, it takes precedence over the global `token.default_ttl_minutes`. If the resolved TTL is zero or null and no `expiresAt` is provided, the token never expires.
 
 ---
@@ -117,6 +119,7 @@ sequenceDiagram
 - Tenant isolation is enforced by comparing the active `TenantContext` tenant with the owner's tenant ID at authentication time.
 - If `apply_tenant_context` is enabled, and no tenant is active, the package sets `TenantContext` from owner tenant ID when available.
 - The authenticated context is stored in `$request->attributes` under `_domain_token_auth_context` for downstream access.
+- Downstream code can consume metadata via `DomainToken::data('key')` or `DomainToken::context()?->data('key')`.
 
 ---
 
@@ -191,5 +194,6 @@ flowchart TD
 | Owner model must match the domain's configured model | `assertModelAllowedForDomain()` in `DomainTokenManager::issue()`                                                                    |
 | Owner must implement `TokenOwner`                    | `assertTokenOwnerContract()` in `DomainTokenManager::issue()`                                                                       |
 | Plain-text token is never stored                     | Only SHA-256 hash persisted; plain text discarded after `IssuedToken` is returned                                                   |
+| Token metadata (`data`) is optional and JSON-based   | Normalized in `normalizeData()` and persisted in `domain_tokens.data`                                                               |
 | Revocation is permanent                              | `revoked_at` is set-only; no un-revoke path exists in the codebase                                                                  |
 | Tenant isolation is enforced at authentication time  | `assertTenantIsolation()` in `DomainTokenManager::authenticate()`                                                                   |

@@ -28,6 +28,7 @@ $issued = DomainToken::issue(
     startsAt: now(),
     expiresAt: now()->addDay(),
     name: 'Reporting token',
+    data: ['client' => 'mobile', 'scope' => 'reports'],
 );
 
 $plainToken = $issued->plainTextToken; // show once — not stored in DB
@@ -45,6 +46,7 @@ $tokenModel = $issued->token;          // Equidna\DomainTokenAuth\Models\DomainT
 | `startsAt`  | `DateTimeInterface\|null`            | No       | Validity window start; defaults to `now()`                        |
 | `expiresAt` | `DateTimeInterface\|null`            | No       | Validity window end; defaults to domain or global TTL             |
 | `name`      | `string\|null`                       | No       | Human-readable label for the token                                |
+| `data`      | `array<string,mixed>`                | No       | Additional JSON payload persisted with the token                  |
 
 **Returns:** `Equidna\DomainTokenAuth\DTO\IssuedToken` (`src/DTO/IssuedToken.php`)
 
@@ -92,6 +94,8 @@ final class AuthenticatedDomainToken
     public readonly DomainToken $token;
     public readonly string $domain;
     public readonly ?Model $owner;
+
+    public function data(?string $key = null, mixed $default = null): mixed;
 }
 ```
 
@@ -158,6 +162,40 @@ if (! DomainToken::can('users.write', $tokenModel)) {
 - `users.*` — grants any action in the `users` namespace.
 - `users.read` — grants the exact action.
 - All comparisons are case-insensitive and trimmed.
+
+---
+
+### `DomainToken::context()`
+
+Returns the authenticated request context previously stored by the middleware.
+
+```php
+$context = DomainToken::context();
+// AuthenticatedDomainToken|null
+```
+
+**Returns:** `Equidna\DomainTokenAuth\Auth\AuthenticatedDomainToken|null`
+
+---
+
+### `DomainToken::data()`
+
+Reads the token `data` payload from the authenticated request context.
+
+```php
+$all = DomainToken::data();
+$client = DomainToken::data('client');
+$fallback = DomainToken::data('missing', 'default-value');
+```
+
+**Parameters:**
+
+| Parameter | Type           | Required | Description                                          |
+| --------- | -------------- | -------- | ---------------------------------------------------- |
+| `key`     | `string\|null` | No       | Specific data key; `null` returns full payload array |
+| `default` | `mixed`        | No       | Fallback value when key is missing                   |
+
+**Returns:** `mixed` — full payload array, single value, or default.
 
 ---
 

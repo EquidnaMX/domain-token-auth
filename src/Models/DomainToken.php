@@ -13,6 +13,7 @@ class DomainToken extends Model
         'name',
         'roles',
         'actions',
+        'data',
         'tokenable_type',
         'tokenable_id',
         'starts_at',
@@ -25,6 +26,7 @@ class DomainToken extends Model
     protected $casts = [
         'roles' => 'array',
         'actions' => 'array',
+        'data' => 'array',
         'starts_at' => 'datetime',
         'expires_at' => 'datetime',
         'last_used_at' => 'datetime',

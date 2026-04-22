@@ -2,7 +2,6 @@
 
 namespace Equidna\DomainTokenAuth\Tests\Feature;
 
-use Equidna\BeeHive\Tenancy\TenantContext;
 use Equidna\DomainTokenAuth\Facades\DomainToken;
 use Equidna\DomainTokenAuth\Tests\FakeApplication;
 use Equidna\DomainTokenAuth\Tests\FakeTenantUser;
@@ -13,6 +12,8 @@ use Illuminate\Support\Facades\DB;
 
 class DomainTokenFlowTest extends TestCase
 {
+    private const BEE_HIVE_TENANT_CONTEXT = 'Equidna\\BeeHive\\Tenancy\\TenantContext';
+
     public function test_domain_tokens_require_an_owner(): void
     {
         $columns = collect(DB::select('PRAGMA table_info(domain_tokens)'))
@@ -33,6 +34,51 @@ class DomainTokenFlowTest extends TestCase
         ]);
 
         $response->assertOk();
+    }
+
+    public function test_persists_additional_token_data_on_issue(): void
+    {
+        $user = FakeUser::query()->create(['name' => 'Ada']);
+
+        $issued = DomainToken::issue(
+            domain: 'user',
+            owner: $user,
+            actions: ['users.read'],
+            data: [
+                'client' => 'mobile',
+                'region' => 'mx',
+                'level' => 2,
+            ],
+        );
+
+        self::assertSame('mobile', $issued->token->data['client'] ?? null);
+        self::assertSame('mx', $issued->token->data['region'] ?? null);
+        self::assertSame(2, $issued->token->data['level'] ?? null);
+    }
+
+    public function test_can_consume_token_data_after_authentication(): void
+    {
+        $user = FakeUser::query()->create(['name' => 'Ada']);
+
+        $issued = DomainToken::issue(
+            domain: 'user',
+            owner: $user,
+            actions: ['users.read'],
+            data: [
+                'client' => 'mobile',
+                'flags' => ['sync', 'reports'],
+            ],
+        );
+
+        $response = $this->getJson('/secured-data', [
+            'Authorization' => 'Bearer ' . $issued->plainTextToken,
+        ]);
+
+        $response->assertOk();
+        $response->assertJsonPath('client', 'mobile');
+        $response->assertJsonPath('data.flags.0', 'sync');
+        $response->assertJsonPath('data.flags.1', 'reports');
+        $response->assertJsonPath('missing', 'fallback');
     }
 
 
@@ -130,6 +176,10 @@ class DomainTokenFlowTest extends TestCase
 
     public function test_rejects_token_when_context_tenant_does_not_match(): void
     {
+        if (! class_exists(self::BEE_HIVE_TENANT_CONTEXT) || ! app()->bound(self::BEE_HIVE_TENANT_CONTEXT)) {
+            self::markTestSkipped('BeeHive is not installed in this environment.');
+        }
+
         $user = FakeTenantUser::query()->create([
             'name' => 'Tenant Ada',
             'tenant_id' => 100,
@@ -138,7 +188,7 @@ class DomainTokenFlowTest extends TestCase
         $issued = DomainToken::issue('tenant_user', $user, ['tenant-users.read']);
 
         // Simulate a different active tenant in the context
-        app(\Equidna\BeeHive\Tenancy\TenantContext::class)->set(999);
+        app(self::BEE_HIVE_TENANT_CONTEXT)->set(999);
 
         $response = $this->getJson('/tenant-secured', [
             'Authorization' => 'Bearer ' . $issued->plainTextToken,

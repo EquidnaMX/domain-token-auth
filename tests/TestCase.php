@@ -2,9 +2,7 @@
 
 namespace Equidna\DomainTokenAuth\Tests;
 
-use Equidna\BeeHive\BeeHiveServiceProvider;
-use Equidna\BeeHive\Tenancy\Resolvers\StaticTenantResolver;
-use Equidna\BeeHive\Tenancy\TenantContext;
+use Equidna\DomainTokenAuth\Facades\DomainToken;
 use Equidna\DomainTokenAuth\Providers\DomainTokenAuthServiceProvider;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Route;
@@ -12,6 +10,10 @@ use Orchestra\Testbench\TestCase as Orchestra;
 
 abstract class TestCase extends Orchestra
 {
+    private const BEE_HIVE_PROVIDER = 'Equidna\\BeeHive\\BeeHiveServiceProvider';
+    private const BEE_HIVE_RESOLVER = 'Equidna\\BeeHive\\Tenancy\\Resolvers\\StaticTenantResolver';
+    private const BEE_HIVE_TENANT_CONTEXT = 'Equidna\\BeeHive\\Tenancy\\TenantContext';
+
     protected function defineEnvironment($app): void
     {
         $app['config']->set('database.default', 'testing');
@@ -20,8 +22,11 @@ abstract class TestCase extends Orchestra
             'database' => ':memory:',
             'prefix' => '',
         ]);
-        $app['config']->set('bee-hive.resolver', StaticTenantResolver::class);
-        $app['config']->set('bee-hive.strict', false);
+
+        if ($this->hasBeeHive()) {
+            $app['config']->set('bee-hive.resolver', self::BEE_HIVE_RESOLVER);
+            $app['config']->set('bee-hive.strict', false);
+        }
 
         $app['config']->set('domain-token-auth.domains', [
             'user' => [
@@ -53,10 +58,15 @@ abstract class TestCase extends Orchestra
 
     protected function getPackageProviders($app): array
     {
-        return [
-            BeeHiveServiceProvider::class,
+        $providers = [
             DomainTokenAuthServiceProvider::class,
         ];
+
+        if ($this->hasBeeHive()) {
+            $providers[] = self::BEE_HIVE_PROVIDER;
+        }
+
+        return $providers;
     }
 
     protected function setUp(): void
@@ -88,10 +98,29 @@ abstract class TestCase extends Orchestra
             return response()->json(['ok' => true]);
         });
 
-        Route::middleware('domain-token:tenant_user')->get('/tenant-secured', function () {
+        Route::middleware('domain-token:user')->get('/secured-data', function () {
             return response()->json([
-                'tenant_id' => app(TenantContext::class)->get(),
+                'data' => DomainToken::data(),
+                'client' => DomainToken::data('client'),
+                'missing' => DomainToken::data('missing', 'fallback'),
             ]);
         });
+
+        Route::middleware('domain-token:tenant_user')->get('/tenant-secured', function () {
+            $tenantId = null;
+
+            if ($this->hasBeeHive() && app()->bound(self::BEE_HIVE_TENANT_CONTEXT)) {
+                $tenantId = app(self::BEE_HIVE_TENANT_CONTEXT)->get();
+            }
+
+            return response()->json([
+                'tenant_id' => $tenantId,
+            ]);
+        });
+    }
+
+    protected function hasBeeHive(): bool
+    {
+        return class_exists(self::BEE_HIVE_PROVIDER);
     }
 }
