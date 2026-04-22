@@ -6,6 +6,14 @@ All AI agents and maintainers **must** update this file whenever a release intro
 
 ---
 
+## v2.1.0
+
+No breaking changes were introduced in `v2.1.0`.
+
+This release is backward-compatible with `v2.0.0` and only adds optional token metadata support (`data` payload), helper accessors, and test/runtime quality improvements.
+
+---
+
 ## v2.0.0
 
 ### 1. `tenant_id` removed from token persistence

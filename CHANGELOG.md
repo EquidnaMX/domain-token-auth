@@ -13,6 +13,11 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ## [Unreleased]
 
 ### Added
+- No unreleased entries yet.
+
+## [v2.1.0] - 2026-04-22 "Signal"
+
+### Added
 
 - Token custom metadata payload support via new optional `data` parameter in `DomainToken::issue()` and `DomainTokenManager::issue()`.
 - New migration `2026_04_22_000001_add_data_to_domain_tokens_table.php` adding nullable JSON column `data`.
@@ -25,7 +30,10 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Changed
 
-- Documentation updated to reflect token metadata support and current API/CLI behavior:
+- Test suite bootstrap now treats BeeHive as optional in local test environments:
+  - conditional provider registration in `tests/TestCase.php`
+  - tenant mismatch test skip when BeeHive classes are unavailable
+- Documentation updated to reflect token metadata support, optional BeeHive testing behavior, and current API/CLI behavior:
   - `README.md`
   - `doc/deployment-instructions.md`
   - `doc/api-documentation.md`
@@ -33,6 +41,12 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   - `doc/tests-documentation.md`
   - `doc/business-logic-and-core-processes.md`
   - `doc/architecture-diagrams.md`
+  - `.gitattributes`
+  - `.editorconfig`
+
+### Fixed
+
+- `DomainToken::data()` and `DomainToken::context()` now resolve authenticated context from the active request instance, preventing null metadata reads during request lifecycle tests.
 
 ## [v2.0.0] - 2026-04-21 "Boundary"
 
@@ -148,6 +162,7 @@ First stable release of `equidna/domain-token-auth`.
 
 <!-- Links section — update with each release -->
 
-[v2.0.0]: https://github.com/EquidnaMX/domain-token-auth/releases/tag/v2.0.0
+[v2.0.0]: https://github.com/EquidnaMX/domain-token-auth/releases/tag/2.0.0
 [v1.0.0]: https://github.com/EquidnaMX/domain-token-auth/releases/tag/1.0.0
-[Unreleased]: https://github.com/EquidnaMX/domain-token-auth/compare/v2.0.0...HEAD
+[v2.1.0]: https://github.com/EquidnaMX/domain-token-auth/releases/tag/2.1.0
+[Unreleased]: https://github.com/EquidnaMX/domain-token-auth/compare/2.1.0...HEAD
