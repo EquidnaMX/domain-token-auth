@@ -73,21 +73,22 @@ tests/
 
 ## Tabla BD — `domain_tokens`
 
-| Columna                       | Tipo            | Notas                                   |
-| ----------------------------- | --------------- | --------------------------------------- |
-| id                            | bigint PK       |                                         |
-| token_hash                    | char(64) UNIQUE | SHA-256 del token plano                 |
-| domain                        | varchar(64)     | dominio configurado                     |
-| name                          | varchar         | nullable, etiqueta                      |
-| roles                         | JSON            | nullable, roles asignados               |
-| actions                       | JSON            | nullable, acciones expandidas           |
-| tokenable_type / tokenable_id | morphs          | dueño polimórfico obligatorio           |
-| starts_at                     | timestamp       | nullable                                |
-| expires_at                    | timestamp       | nullable                                |
-| last_used_at                  | timestamp       | nullable, actualizado en authenticate() |
-| revoked_at                    | timestamp       | nullable — presencia = revocado         |
-| revoked_reason                | varchar         | nullable                                |
-| created_at / updated_at       | timestamps      |                                         |
+| Columna                 | Tipo            | Notas                                   |
+| ----------------------- | --------------- | --------------------------------------- |
+| id                      | bigint PK       |                                         |
+| token_hash              | char(64) UNIQUE | SHA-256 del token plano                 |
+| domain                  | varchar(64)     | dominio configurado                     |
+| name                    | varchar         | nullable, etiqueta                      |
+| roles                   | JSON            | nullable, roles asignados               |
+| actions                 | JSON            | nullable, acciones expandidas           |
+| tokenable_type          | varchar         | dueño polimórfico (tipo) obligatorio    |
+| tokenable_id            | varchar(64)     | dueño polimórfico (id) obligatorio      |
+| starts_at               | timestamp       | nullable                                |
+| expires_at              | timestamp       | nullable                                |
+| last_used_at            | timestamp       | nullable, actualizado en authenticate() |
+| revoked_at              | timestamp       | nullable — presencia = revocado         |
+| revoked_reason          | varchar         | nullable                                |
+| created_at / updated_at | timestamps      |                                         |
 
 Índices: `(domain, revoked_at)`, `(domain, starts_at, expires_at)` y `(domain, tokenable_type, tokenable_id)`
 

@@ -65,7 +65,17 @@ None in `v2.1.0`. See [BREAKING_CHANGES.md](BREAKING_CHANGES.md) for historical 
 php artisan migrate
 ```
 
-3. Optionally adopt metadata access in application logic:
+3. Ensure the owner key column uses `tokenable_id varchar(64)` (migration `2026_04_28_000002_change_tokenable_id_to_varchar_64_on_domain_tokens_table.php`).
+
+If your existing `domain_tokens.tokenable_id` values can exceed 64 characters, audit and fix those records before running migrations:
+
+```sql
+SELECT tokenable_id
+FROM domain_tokens
+WHERE CHAR_LENGTH(tokenable_id) > 64;
+```
+
+4. Optionally adopt metadata access in application logic:
 
 ```php
 $issued = DomainToken::issue(

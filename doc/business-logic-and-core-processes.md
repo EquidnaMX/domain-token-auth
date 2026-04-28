@@ -188,12 +188,12 @@ flowchart TD
 
 ## Business Invariants
 
-| Invariant                                            | Enforcement point                                                                                                                   |
-| ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| Every token must have an owner                       | DB `NOT NULL` on `tokenable_type` and `tokenable_id`; validated at issuance; rejected at authentication if owner cannot be resolved |
-| Owner model must match the domain's configured model | `assertModelAllowedForDomain()` in `DomainTokenManager::issue()`                                                                    |
-| Owner must implement `TokenOwner`                    | `assertTokenOwnerContract()` in `DomainTokenManager::issue()`                                                                       |
-| Plain-text token is never stored                     | Only SHA-256 hash persisted; plain text discarded after `IssuedToken` is returned                                                   |
-| Token metadata (`data`) is optional and JSON-based   | Normalized in `normalizeData()` and persisted in `domain_tokens.data`                                                               |
-| Revocation is permanent                              | `revoked_at` is set-only; no un-revoke path exists in the codebase                                                                  |
-| Tenant isolation is enforced at authentication time  | `assertTenantIsolation()` in `DomainTokenManager::authenticate()`                                                                   |
+| Invariant                                            | Enforcement point                                                                                                                                   |
+| ---------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Every token must have an owner                       | DB `NOT NULL` on `tokenable_type` and `tokenable_id` (`varchar(64)`); validated at issuance; rejected at authentication if owner cannot be resolved |
+| Owner model must match the domain's configured model | `assertModelAllowedForDomain()` in `DomainTokenManager::issue()`                                                                                    |
+| Owner must implement `TokenOwner`                    | `assertTokenOwnerContract()` in `DomainTokenManager::issue()`                                                                                       |
+| Plain-text token is never stored                     | Only SHA-256 hash persisted; plain text discarded after `IssuedToken` is returned                                                                   |
+| Token metadata (`data`) is optional and JSON-based   | Normalized in `normalizeData()` and persisted in `domain_tokens.data`                                                                               |
+| Revocation is permanent                              | `revoked_at` is set-only; no un-revoke path exists in the codebase                                                                                  |
+| Tenant isolation is enforced at authentication time  | `assertTenantIsolation()` in `DomainTokenManager::authenticate()`                                                                                   |

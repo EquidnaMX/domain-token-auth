@@ -12,6 +12,17 @@ No breaking changes were introduced in `v2.1.0`.
 
 This release is backward-compatible with `v2.0.0` and only adds optional token metadata support (`data` payload), helper accessors, and test/runtime quality improvements.
 
+Important upgrade note:
+
+- Migration `2026_04_28_000002_change_tokenable_id_to_varchar_64_on_domain_tokens_table.php` enforces `domain_tokens.tokenable_id` as `varchar(64)`.
+- Before running migrations, audit existing values to ensure none exceed 64 characters:
+
+```sql
+SELECT tokenable_id
+FROM domain_tokens
+WHERE CHAR_LENGTH(tokenable_id) > 64;
+```
+
 ---
 
 ## v2.0.0

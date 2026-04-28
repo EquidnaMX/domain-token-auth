@@ -80,7 +80,7 @@ Covers the full token lifecycle through real HTTP-style requests via Orchestra T
 
 | Test                                                    | What it verifies                                                                                                                  |
 | ------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| `test_domain_tokens_require_an_owner`                   | `tokenable_type` and `tokenable_id` columns are NOT NULL in the schema                                                            |
+| `test_domain_tokens_require_an_owner`                   | `tokenable_type` and `tokenable_id` columns are NOT NULL, and `tokenable_id` is stored as `varchar(64)` in the schema             |
 | `test_can_issue_and_authenticate_token_for_domain`      | A token issued for `user` authenticates successfully on `GET /secured`                                                            |
 | `test_persists_additional_token_data_on_issue`          | Issued token persists custom JSON payload in `data`                                                                               |
 | `test_can_consume_token_data_after_authentication`      | Middleware-authenticated request can read token metadata using `DomainToken::data()`                                              |

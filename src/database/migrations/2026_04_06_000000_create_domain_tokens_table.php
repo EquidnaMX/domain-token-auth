@@ -24,7 +24,8 @@ return new class extends Migration
             $table->string('name')->nullable();
             $table->json('roles')->nullable();
             $table->json('actions')->nullable();
-            $table->morphs('tokenable');
+            $table->string('tokenable_type');
+            $table->string('tokenable_id', 64);
             $table->timestamp('starts_at')->nullable();
             $table->timestamp('expires_at')->nullable();
             $table->timestamp('last_used_at')->nullable();

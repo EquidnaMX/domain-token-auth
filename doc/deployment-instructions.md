@@ -130,6 +130,7 @@ The package now includes two migrations:
 
 - `src/database/migrations/2026_04_06_000000_create_domain_tokens_table.php`
 - `src/database/migrations/2026_04_22_000001_add_data_to_domain_tokens_table.php`
+- `src/database/migrations/2026_04_28_000002_change_tokenable_id_to_varchar_64_on_domain_tokens_table.php`
 
 Together they create and evolve the `domain_tokens` table with the following key columns:
 
@@ -143,7 +144,7 @@ Together they create and evolve the `domain_tokens` table with the following key
 | `actions`        | JSON        | Resolved actions                                      |
 | `data`           | JSON        | Optional custom payload available post-authentication |
 | `tokenable_type` | varchar     | Polymorphic owner type                                |
-| `tokenable_id`   | varchar     | Polymorphic owner ID                                  |
+| `tokenable_id`   | varchar(64) | Polymorphic owner ID                                  |
 | `starts_at`      | timestamp   | Validity window start                                 |
 | `expires_at`     | timestamp   | Validity window end                                   |
 | `last_used_at`   | timestamp   | Updated on each successful authentication             |

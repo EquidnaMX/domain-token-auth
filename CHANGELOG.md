@@ -88,7 +88,7 @@ First stable release of `equidna/domain-token-auth`.
 - `Equidna\DomainTokenAuth\Models\DomainToken` — Eloquent model with `isRevoked()` and `isWithinWindow()` helpers.
 - Migration `2026_04_06_000000_create_domain_tokens_table` creating the `domain_tokens` table with:
   - SHA-256 hash column (`token_hash char(64) UNIQUE`) — plain-text token is never stored.
-  - Polymorphic owner columns (`tokenable_type`, `tokenable_id`) — enforced `NOT NULL`.
+  - Polymorphic owner columns (`tokenable_type`, `tokenable_id varchar(64)`) — enforced `NOT NULL`.
   - Domain column (`domain varchar(64)`).
   - JSON columns `roles` and `actions`.
   - Validity window columns: `starts_at`, `expires_at`, `last_used_at`.

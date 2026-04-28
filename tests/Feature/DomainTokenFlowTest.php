@@ -21,6 +21,7 @@ class DomainTokenFlowTest extends TestCase
 
         self::assertSame(1, (int) $columns->get('tokenable_type')->notnull);
         self::assertSame(1, (int) $columns->get('tokenable_id')->notnull);
+        self::assertSame('varchar', strtolower((string) $columns->get('tokenable_id')->type));
     }
 
     public function test_can_issue_and_authenticate_token_for_domain(): void
