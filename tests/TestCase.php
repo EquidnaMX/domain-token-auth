@@ -53,6 +53,14 @@ abstract class TestCase extends Orchestra
                 'roles' => [],
                 'default_ttl_minutes' => 60,
             ],
+            'string_key_user' => [
+                'model' => FakeStringKeyUser::class,
+                'default_actions' => ['string-users.read'],
+                'roles' => [
+                    'admin' => ['string-users.*'],
+                ],
+                'default_ttl_minutes' => 60,
+            ],
         ]);
     }
 
@@ -91,6 +99,12 @@ abstract class TestCase extends Orchestra
             $table->id();
             $table->string('name')->nullable();
             $table->unsignedBigInteger('tenant_id');
+            $table->timestamps();
+        });
+
+        $this->app['db']->connection()->getSchemaBuilder()->create('fake_string_key_users', function (Blueprint $table): void {
+            $table->string('id', 100)->primary();
+            $table->string('name')->nullable();
             $table->timestamps();
         });
 

@@ -16,6 +16,34 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 - No unreleased entries yet.
 
+## [v2.2.0] - 2026-05-05 "Prism"
+
+### Added
+
+- Support for token owners with **string primary keys** (`$keyType = 'string'`, `$incrementing = false`): UUID, ULID, SHA-1 hashes, and arbitrary strings up to 100 characters are now accepted without SQL type errors.
+- New migration `2026_05_05_000003_expand_tokenable_id_to_varchar_100_on_domain_tokens_table.php` — expands `domain_tokens.tokenable_id` from `varchar(64)` to `varchar(100)` for existing installations. No-ops on SQLite (TEXT is already unbounded). Safe to run on MySQL/MariaDB and PostgreSQL.
+- New test stub `tests/FakeStringKeyUser` — an Eloquent model with `$keyType = 'string'` and `$incrementing = false` used as a string-keyed `TokenOwner` in feature tests.
+- `string_key_user` domain registered in `TestCase` for string-key feature testing.
+- Feature test class `StringKeyOwnerTest` (11 assertions) covering:
+  - Token issuance for a string-key owner
+  - Token authentication and owner resolution via `morphTo`
+  - Token revocation
+  - `domainTokens()` morph relation listing and bulk revocation
+  - `tokenable_type + tokenable_id` direct queries
+  - Cross-owner isolation (no token leakage between distinct string keys)
+  - SHA-1 (40 chars), UUID (36 chars), and ULID (26 chars) key sizes
+
+### Changed
+
+- Base migration `2026_04_06_000000_create_domain_tokens_table.php`: `tokenable_id` column width updated from `varchar(64)` to `varchar(100)` for fresh installations.
+- Alter migration `2026_04_28_000002_change_tokenable_id_to_varchar_64_on_domain_tokens_table.php`: target width updated from `64` to `100` to remain consistent with the base schema.
+- `DomainTokenManager` already stored `tokenable_id` as `(string) $owner->getKey()`; no service-layer changes required.
+- `HasDomainTokens::domainTokens()` and `DomainToken::tokenable()` already use Laravel's polymorphic relation system; string keys are resolved transparently.
+
+### Fixed
+
+- MySQL/MariaDB error `SQLSTATE[22007]: Invalid datetime format: 1292 Truncated incorrect INTEGER value` when querying `domain_tokens` for owners with non-integer primary keys (e.g. SHA-1, UUID). Root cause: column type mismatch between `varchar` and the integer type produced by `$table->morphs()`.
+
 ## [v2.1.0] - 2026-04-22 "Signal"
 
 ### Added

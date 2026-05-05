@@ -6,6 +6,34 @@ All AI agents and maintainers **must** update this file whenever a release intro
 
 ---
 
+## v2.2.0
+
+No breaking changes to the public API were introduced in `v2.2.0`.
+
+### Schema evolution — `tokenable_id` widened to `varchar(100)`
+
+`v2.2.0` expands `domain_tokens.tokenable_id` from `varchar(64)` to `varchar(100)`. This is a **non-destructive, backward-compatible** schema change: existing integer keys (≤ 20 chars) and previously stored string keys (≤ 64 chars) continue to work unchanged.
+
+**Fresh installs** — the base migration already creates `varchar(100)`; no further action needed.
+
+**Existing installs** — run the new migration:
+
+```bash
+php artisan migrate
+```
+
+This executes `2026_05_05_000003_expand_tokenable_id_to_varchar_100_on_domain_tokens_table.php`, which issues `ALTER TABLE domain_tokens MODIFY COLUMN tokenable_id VARCHAR(100)` (MySQL/MariaDB/PostgreSQL). SQLite databases are unchanged (TEXT is unbounded).
+
+Before running, verify no `tokenable_id` values exceed 100 characters (extremely unlikely):
+
+```sql
+SELECT tokenable_id
+FROM domain_tokens
+WHERE CHAR_LENGTH(tokenable_id) > 100;
+```
+
+---
+
 ## v2.1.0
 
 No breaking changes were introduced in `v2.1.0`.
