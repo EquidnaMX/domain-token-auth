@@ -1,97 +1,73 @@
-# Release v2.1.0 "Signal"
+# Release v2.3.0
 
-**Package:** `equidna/domain-token-auth`  
-**Date:** 2026-04-22  
-**Tag:** `2.1.0`
+**Package:** `equidna/domain-token-auth`
+
+**Date:** 2026-08-26
+
+**Tag:** `2.3.0`
 
 ---
 
 ## Summary
 
-`v2.1.0` is a minor release focused on token metadata and runtime ergonomics.
+`v2.3.0` expands framework compatibility to Laravel 13 and Symfony 8 while preserving support for Laravel 12, PHP 8.2+, and Symfony 7. The package API and database schema are unchanged.
 
-The codename **Signal** highlights that tokens can now carry explicit, structured context (`data`) that downstream application code can consume safely after authentication.
-
-This release is backward-compatible with `v2.0.0` and includes API additions, a schema evolution for metadata payload, CLI improvements, and stronger test portability for environments where BeeHive is optional.
+This release also adds continuous-integration coverage for the supported framework combinations and a runtime compatibility test that confirms the service provider and core package services boot correctly.
 
 ---
 
 ## Highlights
 
-- **Custom token metadata** with optional `data` payload at issuance.
-- **Runtime metadata accessors** via `DomainToken::context()` and `DomainToken::data()`.
-- **Authenticated context helper** `AuthenticatedDomainToken::data()`.
-- **Schema evolution** with JSON `data` column migration.
-- **CLI extension** with `domain-token:generate --data='{"key":"value"}'`.
-- **Test reliability improvements** in environments without BeeHive.
+- Laravel 13 support across the package's Illuminate dependencies.
+- Symfony HttpFoundation 8 support alongside Symfony 7.2+.
+- Orchestra Testbench 11 and PHPUnit 12/13 support for development and CI.
+- CI coverage for PHP 8.2, 8.3, and 8.4 framework stacks.
+- No application code, configuration, or database migration changes required.
 
 ---
 
 ## Added
 
-- Optional `data` parameter in `DomainToken::issue()` and `DomainTokenManager::issue()`.
-- Migration `2026_04_22_000001_add_data_to_domain_tokens_table.php` adding nullable JSON `data`.
-- Runtime helpers:
-  - `DomainToken::context()`
-  - `DomainToken::data(?string $key = null, mixed $default = null)`
-  - `AuthenticatedDomainToken::data(?string $key = null, mixed $default = null)`
-- Artisan command support for `--data` JSON payload.
-- Feature tests validating metadata persistence and post-auth metadata consumption.
+- GitHub Actions test matrix for these representative stacks:
+  - PHP 8.2, Testbench 10, and Symfony 7.2.
+  - PHP 8.3, Testbench 11, and Symfony 7.4.
+  - PHP 8.4, Testbench 11, and Symfony 8.
+- `FrameworkCompatibilityTest` to verify that the package service provider boots and the `DomainToken` entry point resolves from the container.
 
 ## Changed
 
-- Testbench setup now handles BeeHive as optional dependency during test execution.
-- Tenant mismatch test is conditionally skipped when BeeHive classes are not available.
-- Documentation aligned with the current metadata API and CLI surface.
-
-## Fixed
-
-- `DomainToken::data()`/`DomainToken::context()` now resolve from the active request instance to avoid null context reads during authenticated request lifecycle usage.
+- Illuminate component constraints now accept `^12.0|^13.0`.
+- `symfony/http-foundation` is now an explicit dependency with constraint `^7.2|^8.0`.
+- Development constraints now accept Orchestra Testbench `^10.0|^11.0` and PHPUnit `^11.5.3|^12.0.1|^13.0.0`.
+- Documentation now describes the PHP, Laravel, and Symfony compatibility combinations.
+- Locked development dependencies were refreshed against the Laravel 13 / Symfony 8 stack.
 
 ---
 
 ## Breaking Changes
 
-None in `v2.1.0`. See [BREAKING_CHANGES.md](BREAKING_CHANGES.md) for historical migration notes.
+None in `v2.3.0`. Laravel 12 remains supported, and the public API and persistence schema are unchanged.
+
+See [BREAKING_CHANGES.md](BREAKING_CHANGES.md) for historical migration notes.
 
 ---
 
-## Upgrade / Migration Guide
+## Upgrade Guide
 
-1. Pull and install package update.
-2. Run migrations to add the `data` column:
+1. Update the package constraint and dependencies:
 
 ```bash
-php artisan migrate
+composer require equidna/domain-token-auth:^2.3
 ```
 
-3. Ensure the owner key column uses `tokenable_id varchar(64)` (migration `2026_04_28_000002_change_tokenable_id_to_varchar_64_on_domain_tokens_table.php`).
-
-If your existing `domain_tokens.tokenable_id` values can exceed 64 characters, audit and fix those records before running migrations:
-
-```sql
-SELECT tokenable_id
-FROM domain_tokens
-WHERE CHAR_LENGTH(tokenable_id) > 64;
-```
-
-4. Optionally adopt metadata access in application logic:
-
-```php
-$issued = DomainToken::issue(
-		domain: 'user',
-		owner: $user,
-		data: ['client' => 'mobile']
-);
-
-$client = DomainToken::data('client');
-```
+2. No package migrations or configuration changes are required for this release.
+3. When using Symfony 8 components, run the application on PHP 8.4 or newer. Laravel 12 installations may continue using PHP 8.2+ with Symfony 7.
 
 ---
 
 ## References
 
 - Full history: [CHANGELOG.md](CHANGELOG.md)
-- Breaking changes & migration guidance: [BREAKING_CHANGES.md](BREAKING_CHANGES.md)
-- API reference: [doc/api-documentation.md](doc/api-documentation.md)
+- Breaking changes and migration guidance: [BREAKING_CHANGES.md](BREAKING_CHANGES.md)
 - Deployment guide: [doc/deployment-instructions.md](doc/deployment-instructions.md)
+- Test documentation: [doc/tests-documentation.md](doc/tests-documentation.md)

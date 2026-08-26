@@ -16,6 +16,20 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 - No unreleased entries yet.
 
+## [v2.3.0] - 2026-08-26
+
+### Added
+
+- GitHub Actions compatibility matrix covering Laravel 12 and 13 across PHP 8.2, 8.3, and 8.4 with supported Symfony 7 and 8 combinations.
+- Framework compatibility test that verifies the package boots and its core services resolve on supported Laravel installations.
+
+### Changed
+
+- Expanded the supported Illuminate component versions from Laravel 12 only to Laravel 12 or 13.
+- Added an explicit `symfony/http-foundation` constraint supporting Symfony 7.2 or 8.0.
+- Expanded development dependencies to Orchestra Testbench 10 or 11 and PHPUnit 11.5, 12, or 13.
+- Updated framework compatibility documentation and refreshed locked development dependencies for the Laravel 13 / Symfony 8 test stack.
+
 ## [v2.2.0] - 2026-05-05 "Prism"
 
 ### Added
@@ -191,7 +205,9 @@ First stable release of `equidna/domain-token-auth`.
 
 <!-- Links section — update with each release -->
 
+[Unreleased]: https://github.com/EquidnaMX/domain-token-auth/compare/2.3.0...HEAD
+[v2.3.0]: https://github.com/EquidnaMX/domain-token-auth/compare/2.2.0...2.3.0
+[v2.2.0]: https://github.com/EquidnaMX/domain-token-auth/compare/2.1.0...2.2.0
+[v2.1.0]: https://github.com/EquidnaMX/domain-token-auth/releases/tag/2.1.0
 [v2.0.0]: https://github.com/EquidnaMX/domain-token-auth/releases/tag/2.0.0
 [v1.0.0]: https://github.com/EquidnaMX/domain-token-auth/releases/tag/1.0.0
-[v2.1.0]: https://github.com/EquidnaMX/domain-token-auth/releases/tag/2.1.0
-[Unreleased]: https://github.com/EquidnaMX/domain-token-auth/compare/2.1.0...HEAD
