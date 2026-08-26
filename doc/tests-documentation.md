@@ -6,8 +6,8 @@
 
 | Property       | Value                             |
 | -------------- | --------------------------------- |
-| **Framework**  | PHPUnit 11                        |
-| **Test bench** | Orchestra Testbench `^9.0\|^10.0` |
+| **Framework**  | PHPUnit `^11.5.3\|^12.0.1\|^13.0` |
+| **Test bench** | Orchestra Testbench `^10.0\|^11.0` |
 | **Config**     | `phpunit.xml` at project root     |
 
 ---
@@ -23,6 +23,8 @@ vendor/bin/phpunit
 ```
 
 The test suite uses an in-memory SQLite database. No external database or services need to be configured before running tests.
+
+CI runs the suite against Laravel 12 / Symfony 7, Laravel 13 / Symfony 7.4, and Laravel 13 / Symfony 8. The Symfony 8 job uses PHP 8.4 because Symfony 8 does not support earlier PHP versions.
 
 > Note: BeeHive is optional. If `equidna/bee-hive` is not installed, the tenant-specific feature test is skipped intentionally, so a result like `Skipped: 1` is expected.
 

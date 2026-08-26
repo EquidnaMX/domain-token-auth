@@ -5,17 +5,18 @@
   "license": "MIT",
   "require": {
     "php": "^8.2",
-    "illuminate/support": "^12.0",
-    "illuminate/http": "^12.0",
-    "illuminate/database": "^12.0",
-    "illuminate/console": "^12.0"
+    "illuminate/support": "^12.0|^13.0",
+    "illuminate/http": "^12.0|^13.0",
+    "illuminate/database": "^12.0|^13.0",
+    "illuminate/console": "^12.0|^13.0",
+    "symfony/http-foundation": "^7.2|^8.0"
   },
   "suggest": {
     "equidna/bee-hive": "Required for multi-tenant context propagation after token authentication (^1.0)"
   },
   "require-dev": {
-    "orchestra/testbench": "^9.0|^10.0",
-    "phpunit/phpunit": "^11.0",
+    "orchestra/testbench": "^10.0|^11.0",
+    "phpunit/phpunit": "^11.5.3|^12.0.1|^13.0.0",
     "squizlabs/php_codesniffer": "^4.0"
   },
   "autoload": {

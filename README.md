@@ -31,7 +31,8 @@
 | **Project type**         | Laravel **package** (library)                                      |
 | **Package name**         | `equidna/domain-token-auth`                                        |
 | **PHP version**          | `^8.2`                                                             |
-| **Laravel version**      | `^12.0` (via `illuminate/*` components)                            |
+| **Laravel version**      | `^12.0\|^13.0` (via `illuminate/*` components)                    |
+| **Symfony version**      | HttpFoundation `^7.2\|^8.0`                                      |
 | **Primary database**     | Relies on the host application's configured database               |
 | **Cache**                | Not used internally                                                |
 | **Queue**                | Not used internally                                                |
@@ -40,6 +41,8 @@
 ---
 
 ## Quick Start
+
+Laravel 12 runs on PHP 8.2+ with Symfony 7. Laravel 13 requires PHP 8.3+ and supports Symfony 7.4 or 8; Symfony 8 itself requires PHP 8.4+.
 
 1. **Install** via Composer:
 

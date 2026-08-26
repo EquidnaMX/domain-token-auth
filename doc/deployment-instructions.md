@@ -9,10 +9,13 @@ This package is a **Laravel library**, not a standalone application. Deployment 
 | Requirement    | Version                                                                  |
 | -------------- | ------------------------------------------------------------------------ |
 | PHP            | `^8.2`                                                                   |
-| Laravel        | `^12.0`                                                                  |
+| Laravel        | `^12.0\|^13.0`                                                          |
+| Symfony        | HttpFoundation `^7.2\|^8.0`                                            |
 | PHP extensions | `pdo`, `mbstring`, `json` (standard Laravel requirements)                |
 | Database       | Any database supported by Laravel's Eloquent (MySQL, PostgreSQL, SQLite) |
 | Optional       | `equidna/bee-hive ^1.0` for multi-tenant context propagation             |
+
+Supported runtime combinations follow the framework constraints: Laravel 12 with Symfony 7 on PHP 8.2+, Laravel 13 with Symfony 7.4 on PHP 8.3+, and Laravel 13 with Symfony 8 on PHP 8.4+. Composer selects a compatible Symfony release for the chosen PHP and Laravel versions.
 
 No dedicated cache store, queue driver, or external services are required by the package itself.
 
